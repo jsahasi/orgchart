@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Org Chart (Redacted)</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f5f7fa;
+    color: #1a1a2e;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+select, input[type="text"] {
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+select:focus, input[type="text"]:focus {
+    border-color: rgba(255,255,255,0.5);
+}
+select option {
+    background: #1a1a2e;
+    color: white;
+}
+input[type="text"]::placeholder {
+    color: rgba(255,255,255,0.5);
+}
+
+.toggle-btn {
+    padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.toggle-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+.toggle-btn.active {
+    background: #e94560;
+    border-color: #e94560;
+}
+
+/* Navigation */
+.nav-bar {
+    background: white;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #e8ecf1;
+    flex-wrap: wrap;
+}
+
+.nav-btn {
+    padding: 6px 14px;
+    border: 1px solid #d1d9e6;
+    border-radius: 6px;
+    background: white;
+    color: #4a5568;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+.nav-btn:hover {
+    background: #f0f4f8;
+    border-color: #a0aec0;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+.breadcrumb span {
+    color: #718096;
+    font-size: 13px;
+}
+.breadcrumb a {
+    color: #3182ce;
+    text-decoration: none;
+    font-size: 13px;
+    cursor: pointer;
+}
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+.breadcrumb .current {
+    color: #1a1a2e;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* Main content */
+.main {
+    padding: 32px 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Manager card */
+.manager-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.manager-card {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(26,26,46,0.2);
+    min-width: 280px;
+    max-width: 400px;
+}
+.manager-card .name {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.manager-card .title {
+    font-size: 14px;
+    opacity: 0.85;
+    margin-bottom: 8px;
+}
+.manager-card .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.badge-fte {
+    background: rgba(72,187,120,0.2);
+    color: #68d391;
+}
+.badge-contractor {
+    background: rgba(237,137,54,0.2);
+    color: #f6ad55;
+}
+.manager-card .teams {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Connector */
+.connector {
+    width: 2px;
+    height: 32px;
+    background: #cbd5e0;
+    margin: 0 auto;
+}
+
+.connector-h {
+    height: 2px;
+    background: #cbd5e0;
+    margin: 0 auto 24px;
+}
+
+/* Reports grid */
+.reports-label {
+    text-align: center;
+    font-size: 13px;
+    color: #718096;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Person card */
+.person-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #e8ecf1;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+.person-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    border-color: #3182ce;
+}
+.person-card .name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+}
+.person-card .title {
+    font-size: 12px;
+    color: #718096;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+.person-card .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.person-card .dr-count {
+    font-size: 11px;
+    color: #a0aec0;
+    margin-top: 8px;
+}
+.person-card .teams {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.person-card.placeholder {
+    border-style: dashed;
+    opacity: 0.7;
+}
+
+/* Team pill */
+.team-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-decoration: none;
+}
+.team-pill:hover {
+    opacity: 0.8;
+}
+
+/* Scrum view */
+.scrum-view {
+    max-width: 900px;
+    margin: 0 auto;
+}
+.scrum-header {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 24px;
+}
+.discipline-section {
+    margin-bottom: 24px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #e8ecf1;
+}
+.discipline-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e8ecf1;
+}
+.scrum-member {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f4f8;
+}
+.scrum-member:last-child {
+    border-bottom: none;
+}
+.scrum-member.is-lead {
+    font-weight: 700;
+}
+.scrum-member a {
+    color: #3182ce;
+    text-decoration: none;
+}
+.scrum-member a:hover {
+    text-decoration: underline;
+}
+.scrum-member .member-title {
+    color: #718096;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+/* Missing titles */
+.missing-section {
+    margin-top: 40px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #e8ecf1;
+}
+.missing-toggle {
+    cursor: pointer;
+    color: #718096;
+    font-size: 13px;
+}
+.missing-toggle:hover {
+    color: #4a5568;
+}
+.missing-list {
+    display: none;
+    margin-top: 12px;
+}
+.missing-list.open {
+    display: block;
+}
+.missing-list ul {
+    list-style: none;
+    padding: 0;
+}
+.missing-list li {
+    padding: 4px 0;
+    font-size: 13px;
+    color: #718096;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    color: #a0aec0;
+    padding: 48px;
+    font-size: 15px;
+}
+
+/* Headcount bar */
+.headcount {
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Org Chart (Redacted)</h1>
+    <div class="header-controls">
+        <select id="orgSelect" onchange="switchOrg(this.value)"></select>
+        <input type="text" id="searchBox" placeholder="Search by name..." onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="toggle-btn" id="fteToggle" onclick="toggleFTE()">FTE Only</button>
+        <span class="headcount" id="headcount"></span>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <button class="nav-btn" id="homeBtn" onclick="goHome()">Home</button>
+    <button class="nav-btn" id="topBtn" onclick="goTop()">Top</button>
+    <button class="nav-btn" id="upBtn" onclick="goUp()">Up</button>
+    <button class="nav-btn" id="backToOrg" onclick="backToOrg()" style="display:none">Back to Org</button>
+    <div class="breadcrumb" id="breadcrumb"></div>
+</div>
+
+<div class="main" id="mainContent"></div>
+
+<script>
+const DATA = {"orgs": {"Product-Design": {"top": "jayesh-sahasi", "nodes": {"jayesh-sahasi": {"id": "jayesh-sahasi", "name": "Person 001", "title": "EVP Product & CTO", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "kevin-miller": {"id": "kevin-miller", "name": "Person 002", "title": "Senior Director Product Management", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "jared-chappin": {"id": "jared-chappin", "name": "Person 003", "title": "Director Product Management", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "salma-bargach": {"id": "salma-bargach", "name": "Person 004", "title": "Director Product Management", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "felix-biju": {"id": "felix-biju", "name": "Person 005", "title": "Director Product Management", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "trupti-telang": {"id": "trupti-telang", "name": "Person 006", "title": "Sr. Director Design", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "michael-lin": {"id": "michael-lin", "name": "Person 007", "title": "Senior Director Product Management", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "janani-venkatachalam": {"id": "janani-venkatachalam", "name": "Person 008", "title": "UX Designer", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "sanel-selimovic": {"id": "sanel-selimovic", "name": "Person 009", "title": "Senior UX Designer", "employment": "Contractor", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "siqi-xia": {"id": "siqi-xia", "name": "Person 010", "title": "Sr UX Designer", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Product-Design"}, "placeholder-steve-sims": {"id": "placeholder-steve-sims", "name": "Person 011", "title": "Sr. Vice President Product Management", "employment": "", "scrumTeams": [], "placeholder": true, "org": "Product-Design"}}, "children": {"placeholder-steve-sims": ["felix-biju", "jared-chappin", "kevin-miller", "salma-bargach", "trupti-telang"], "kevin-miller": ["michael-lin"], "trupti-telang": ["janani-venkatachalam", "sanel-selimovic", "siqi-xia"], "jayesh-sahasi": ["placeholder-steve-sims"]}}, "Full QA Org": {"top": "jayesh-sahasi", "nodes": {"jayesh-sahasi": {"id": "jayesh-sahasi", "name": "Person 001", "title": "EVP Product & CTO", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Full QA Org"}, "c-hari-prasad": {"id": "c-hari-prasad", "name": "Person 012", "title": "Contractor – QA Automation", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "rumana-ilyas": {"id": "rumana-ilyas", "name": "Person 013", "title": "Director, QA", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Full QA Org"}, "jenny-wai-li": {"id": "jenny-wai-li", "name": "Person 014", "title": "Senior Director, QA", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Full QA Org"}, "shefali-singh": {"id": "shefali-singh", "name": "Person 015", "title": "Senior Director, QA", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Full QA Org"}, "c-divya-kag": {"id": "c-divya-kag", "name": "Person 016", "title": "Contractor – QA Automation", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "ashish-oza": {"id": "ashish-oza", "name": "Person 017", "title": "Contractor – Director, QA", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "c-nikhil-bornare": {"id": "c-nikhil-bornare", "name": "Person 018", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "c-mohit-talera": {"id": "c-mohit-talera", "name": "Person 019", "title": "Contractor – QA Automation", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "manak-choyal": {"id": "manak-choyal", "name": "Person 020", "title": "Contractor – Lead QA Automation", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "c-chetan-kushwah": {"id": "c-chetan-kushwah", "name": "Person 021", "title": "Contractor – QA Automation", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "sumeet-patidar": {"id": "sumeet-patidar", "name": "Person 022", "title": "Contractor – QA Automation", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "vaishali-jaiswal": {"id": "vaishali-jaiswal", "name": "Person 023", "title": "Contractor – QA Automation", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "c-srijan-parihar": {"id": "c-srijan-parihar", "name": "Person 024", "title": "Contractor – QA", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "c-kumar-saurabh": {"id": "c-kumar-saurabh", "name": "Person 025", "title": "Contractor – QA Automation", "employment": "Contractor", "scrumTeams": ["Automation"], "placeholder": false, "org": "Full QA Org"}, "c-abhishek-tanwar": {"id": "c-abhishek-tanwar", "name": "Person 026", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "c-surbhi-porwal": {"id": "c-surbhi-porwal", "name": "Person 027", "title": "QA Engineer (InfoHorizon)", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "prakash-mandwal": {"id": "prakash-mandwal", "name": "Person 028", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "c-gargeya-borgaonkar": {"id": "c-gargeya-borgaonkar", "name": "Person 029", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "manjeet-singh": {"id": "manjeet-singh", "name": "Person 030", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor", "scrumTeams": ["Console", "Forums", "Vids"], "placeholder": false, "org": "Full QA Org"}, "rahul-yadav": {"id": "rahul-yadav", "name": "Person 031", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "priyanka-jain": {"id": "priyanka-jain", "name": "Person 032", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "vimala-gandham": {"id": "vimala-gandham", "name": "Person 033", "title": "Senior Lead QA Engineer", "employment": "Full Time", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "c-tushar-gaurawat": {"id": "c-tushar-gaurawat", "name": "Person 034", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "alumelu-govindareddy": {"id": "alumelu-govindareddy", "name": "Person 035", "title": "Senior QA Engineer", "employment": "Full Time", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "c-mohini-verma": {"id": "c-mohini-verma", "name": "Person 036", "title": "Contractor (QA Engineer)", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "c-yashdeep-singh": {"id": "c-yashdeep-singh", "name": "Person 037", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "abhijeet-joshi": {"id": "abhijeet-joshi", "name": "Person 038", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Console", "Vids"], "placeholder": false, "org": "Full QA Org"}, "nurlan-shukurlu": {"id": "nurlan-shukurlu", "name": "Person 039", "title": "Senior QA Engineer", "employment": "Full Time", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "c-ashwijt-khaire": {"id": "c-ashwijt-khaire", "name": "Person 040", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "c-vedika-soni": {"id": "c-vedika-soni", "name": "Person 041", "title": "Contractor (QA Engineer)", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "c-sourabh-samediya": {"id": "c-sourabh-samediya", "name": "Person 042", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "c-ajay-pal": {"id": "c-ajay-pal", "name": "Person 043", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full QA Org"}, "jyothi-mittapalli": {"id": "jyothi-mittapalli", "name": "Person 044", "title": "Senior Lead QA Engineer", "employment": "Full Time", "scrumTeams": ["Console", "Vids"], "placeholder": false, "org": "Full QA Org"}, "shailja-singh": {"id": "shailja-singh", "name": "Person 045", "title": "Senior QA Engineer", "employment": "Full Time", "scrumTeams": ["VC", "EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "mohit-sengar": {"id": "mohit-sengar", "name": "Person 046", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "c-anshul-sahu": {"id": "c-anshul-sahu", "name": "Person 047", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Go Live"], "placeholder": false, "org": "Full QA Org"}, "yan-sarnovskiy": {"id": "yan-sarnovskiy", "name": "Person 048", "title": "Lead QA Engineer", "employment": "Full Time", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "c-apurva-choudary": {"id": "c-apurva-choudary", "name": "Person 049", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Go Live"], "placeholder": false, "org": "Full QA Org"}, "c-shubhi-badole": {"id": "c-shubhi-badole", "name": "Person 050", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "c-anurag-padiyar": {"id": "c-anurag-padiyar", "name": "Person 051", "title": "Contractor (QA Engineer)", "employment": "Contractor", "scrumTeams": ["VC", "Go Live"], "placeholder": false, "org": "Full QA Org"}, "keshav-jaiswal": {"id": "keshav-jaiswal", "name": "Person 052", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "c-gourav-tomar": {"id": "c-gourav-tomar", "name": "Person 053", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "syamala-bantupalli": {"id": "syamala-bantupalli", "name": "Person 054", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor", "scrumTeams": ["Go Live"], "placeholder": false, "org": "Full QA Org"}, "ajay-kumar-gupta": {"id": "ajay-kumar-gupta", "name": "Person 055", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "yadav-singh-parmar": {"id": "yadav-singh-parmar", "name": "Person 056", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "sandeep-chaubey": {"id": "sandeep-chaubey", "name": "Person 057", "title": "Contractor – QA Lead", "employment": "Contractor", "scrumTeams": ["VC", "Go Live"], "placeholder": false, "org": "Full QA Org"}, "nikhila-aradhyula": {"id": "nikhila-aradhyula", "name": "Person 058", "title": "QA Engineer", "employment": "Full Time", "scrumTeams": ["Go Live"], "placeholder": false, "org": "Full QA Org"}, "c-subhani-singh": {"id": "c-subhani-singh", "name": "Person 059", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["VC", "EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "nikhil-bhatt": {"id": "nikhil-bhatt", "name": "Person 060", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["VC", "EHub/Target"], "placeholder": false, "org": "Full QA Org"}, "c-megha-upadhayay": {"id": "c-megha-upadhayay", "name": "Person 061", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Go Live"], "placeholder": false, "org": "Full QA Org"}, "c-neeti-sharma": {"id": "c-neeti-sharma", "name": "Person 062", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Presenter"], "placeholder": false, "org": "Full QA Org"}, "pushpendra-tiwari": {"id": "pushpendra-tiwari", "name": "Person 063", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Eng Tools"], "placeholder": false, "org": "Full QA Org"}, "chitralekha-dwivedi": {"id": "chitralekha-dwivedi", "name": "Person 064", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full QA Org"}, "c-akshay-mandloi": {"id": "c-akshay-mandloi", "name": "Person 065", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Presenter"], "placeholder": false, "org": "Full QA Org"}, "c-prerna-sharma": {"id": "c-prerna-sharma", "name": "Person 066", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "gurmeet-singh": {"id": "gurmeet-singh", "name": "Person 067", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full QA Org"}, "c-akshay-patidar": {"id": "c-akshay-patidar", "name": "Person 068", "title": "Contractor (QA Engineer)", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "c-mahima-malviya": {"id": "c-mahima-malviya", "name": "Person 069", "title": "Contractor (QA Engineer)", "employment": "Contractor", "scrumTeams": [], "placeholder": false, "org": "Full QA Org"}, "c-rishabh-joshi": {"id": "c-rishabh-joshi", "name": "Person 070", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "c-bhushan-mahire": {"id": "c-bhushan-mahire", "name": "Person 071", "title": "Contractor (QA Engineer)", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "helly-tanna": {"id": "helly-tanna", "name": "Person 072", "title": "Lead QA Engineer", "employment": "Full Time", "scrumTeams": ["Elite Admin", "Engineering AI"], "placeholder": false, "org": "Full QA Org"}, "olga-grama": {"id": "olga-grama", "name": "Person 073", "title": "Lead QA Engineer", "employment": "Full Time", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full QA Org"}, "c-ravi-singh": {"id": "c-ravi-singh", "name": "Person 074", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full QA Org"}, "c-kanika-dixit": {"id": "c-kanika-dixit", "name": "Person 075", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full QA Org"}, "rohit-jha": {"id": "rohit-jha", "name": "Person 076", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "c-bhagwan-soni": {"id": "c-bhagwan-soni", "name": "Person 077", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "paul-zarzecki": {"id": "paul-zarzecki", "name": "Person 078", "title": "QA Manager", "employment": "Full Time", "scrumTeams": ["Elite Studio"], "placeholder": false, "org": "Full QA Org"}, "lilia-tulei": {"id": "lilia-tulei", "name": "Person 079", "title": "QA Engineer", "employment": "Full Time", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full QA Org"}, "fong-xiong": {"id": "fong-xiong", "name": "Person 080", "title": "Senior QA Engineer", "employment": "Full Time", "scrumTeams": ["Elite Studio", "Forums"], "placeholder": false, "org": "Full QA Org"}, "c-tarun-sakalley": {"id": "c-tarun-sakalley", "name": "Person 081", "title": "QA Contractor", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full QA Org"}, "c-shruti-joshi": {"id": "c-shruti-joshi", "name": "Person 082", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full QA Org"}, "c-shobhit-shrivas": {"id": "c-shobhit-shrivas", "name": "Person 083", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "c-rishi-shrivastava": {"id": "c-rishi-shrivastava", "name": "Person 084", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin", "Engineering AI"], "placeholder": false, "org": "Full QA Org"}, "pavel-preyomyshev": {"id": "pavel-preyomyshev", "name": "Person 085", "title": "Lead QA Engineer", "employment": "Full Time", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full QA Org"}, "marina-belova": {"id": "marina-belova", "name": "Person 086", "title": "Senior QA Engineer", "employment": "Full Time", "scrumTeams": ["Elite Studio", "Eng Tools"], "placeholder": false, "org": "Full QA Org"}, "c-gourav-shukla": {"id": "c-gourav-shukla", "name": "Person 087", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": [], "placeholder": false, "org": "Full QA Org"}, "c-sumit-verma": {"id": "c-sumit-verma", "name": "Person 088", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Elite Studio"], "placeholder": false, "org": "Full QA Org"}, "c-roma-jain": {"id": "c-roma-jain", "name": "Person 089", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "c-priya-chouhan": {"id": "c-priya-chouhan", "name": "Person 090", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Eng Tools", "Elite Studio"], "placeholder": false, "org": "Full QA Org"}, "c-pooja-thakur": {"id": "c-pooja-thakur", "name": "Person 091", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "abel-cruz": {"id": "abel-cruz", "name": "Person 092", "title": "Senior QA Engineer", "employment": "Full Time", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full QA Org"}, "c-mayank-khede": {"id": "c-mayank-khede", "name": "Person 093", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full QA Org"}, "c-shreya-raghuwanshi": {"id": "c-shreya-raghuwanshi", "name": "Person 094", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full QA Org"}, "c-rahul-sharma": {"id": "c-rahul-sharma", "name": "Person 095", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Presenter"], "placeholder": false, "org": "Full QA Org"}, "preeti-sharma": {"id": "preeti-sharma", "name": "Person 096", "title": "Lead QA Engineer", "employment": "Full Time", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "c-nikhil-sharma": {"id": "c-nikhil-sharma", "name": "Person 097", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Presenter"], "placeholder": false, "org": "Full QA Org"}, "c-kushal-saitwal": {"id": "c-kushal-saitwal", "name": "Person 098", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full QA Org"}, "c-harsh-parasher": {"id": "c-harsh-parasher", "name": "Person 099", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full QA Org"}, "ajay-yadav": {"id": "ajay-yadav", "name": "Person 100", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "c-shubham-kumawat": {"id": "c-shubham-kumawat", "name": "Person 101", "title": "Contractor (QA)", "employment": "Contractor", "scrumTeams": ["Presenter"], "placeholder": false, "org": "Full QA Org"}, "c-prajjawal-saxena": {"id": "c-prajjawal-saxena", "name": "Person 102", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Engineering AI"], "placeholder": false, "org": "Full QA Org"}, "c-aniruddh-dongariya": {"id": "c-aniruddh-dongariya", "name": "Person 103", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "c-shubham-chandra": {"id": "c-shubham-chandra", "name": "Person 104", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Presenter"], "placeholder": false, "org": "Full QA Org"}, "sanjeev-gupta": {"id": "sanjeev-gupta", "name": "Person 105", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "c-divya-sharma": {"id": "c-divya-sharma", "name": "Person 106", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Elite Admin"], "placeholder": false, "org": "Full QA Org"}, "jyothi-dasari": {"id": "jyothi-dasari", "name": "Person 107", "title": "QA Lead", "employment": "Contractor", "scrumTeams": ["Elite Studio"], "placeholder": false, "org": "Full QA Org"}, "c-rajkamal-karpenter": {"id": "c-rajkamal-karpenter", "name": "Person 108", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Presenter"], "placeholder": false, "org": "Full QA Org"}, "c-ashish-kaslikar": {"id": "c-ashish-kaslikar", "name": "Person 109", "title": "Contractor – QA Engineer", "employment": "Contractor", "scrumTeams": ["Presenter"], "placeholder": false, "org": "Full QA Org"}, "placeholder-oleg-massakovskyy": {"id": "placeholder-oleg-massakovskyy", "name": "Person 110", "title": "Vice President QA Engineering", "employment": "", "scrumTeams": [], "placeholder": true, "org": "Full QA Org"}}, "children": {"ashish-oza": ["c-chetan-kushwah", "c-divya-kag", "c-hari-prasad", "c-kumar-saurabh", "c-mohit-talera", "c-nikhil-bornare", "c-srijan-parihar", "manak-choyal", "sumeet-patidar", "vaishali-jaiswal"], "placeholder-oleg-massakovskyy": ["ashish-oza", "jenny-wai-li", "rumana-ilyas", "shefali-singh"], "rumana-ilyas": ["abhijeet-joshi", "alumelu-govindareddy", "c-abhishek-tanwar", "c-ajay-pal", "c-ashwijt-khaire", "c-gargeya-borgaonkar", "c-mohini-verma", "c-sourabh-samediya", "c-surbhi-porwal", "c-tushar-gaurawat", "c-vedika-soni", "c-yashdeep-singh", "jyothi-mittapalli", "manjeet-singh", "nurlan-shukurlu", "prakash-mandwal", "priyanka-jain", "rahul-yadav", "vimala-gandham"], "jenny-wai-li": ["ajay-kumar-gupta", "c-anshul-sahu", "c-anurag-padiyar", "c-apurva-choudary", "c-gourav-tomar", "c-megha-upadhayay", "c-shubhi-badole", "c-subhani-singh", "keshav-jaiswal", "mohit-sengar", "nikhil-bhatt", "nikhila-aradhyula", "sandeep-chaubey", "shailja-singh", "syamala-bantupalli", "yadav-singh-parmar", "yan-sarnovskiy"], "shefali-singh": ["abel-cruz", "ajay-yadav", "c-akshay-mandloi", "c-akshay-patidar", "c-aniruddh-dongariya", "c-ashish-kaslikar", "c-bhagwan-soni", "c-bhushan-mahire", "c-divya-sharma", "c-gourav-shukla", "c-harsh-parasher", "c-kanika-dixit", "c-kushal-saitwal", "c-mahima-malviya", "c-mayank-khede", "c-neeti-sharma", "c-nikhil-sharma", "c-pooja-thakur", "c-prajjawal-saxena", "c-prerna-sharma", "c-priya-chouhan", "c-rahul-sharma", "c-rajkamal-karpenter", "c-ravi-singh", "c-rishabh-joshi", "c-rishi-shrivastava", "c-roma-jain", "c-shobhit-shrivas", "c-shreya-raghuwanshi", "c-shruti-joshi", "c-shubham-chandra", "c-shubham-kumawat", "c-sumit-verma", "c-tarun-sakalley", "chitralekha-dwivedi", "fong-xiong", "gurmeet-singh", "helly-tanna", "jyothi-dasari", "lilia-tulei", "marina-belova", "olga-grama", "paul-zarzecki", "pavel-preyomyshev", "preeti-sharma", "pushpendra-tiwari", "rohit-jha", "sanjeev-gupta"], "jayesh-sahasi": ["placeholder-oleg-massakovskyy"]}}, "Full Dev Org": {"top": "jayesh-sahasi", "nodes": {"jayesh-sahasi": {"id": "jayesh-sahasi", "name": "Person 001", "title": "EVP Product & CTO", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "Full Dev Org"}, "homer-santos": {"id": "homer-santos", "name": "Person 111", "title": "Engineering Manager", "employment": "Full Time", "scrumTeams": ["Salesforce"], "placeholder": false, "org": "Full Dev Org"}, "james-gomez": {"id": "james-gomez", "name": "Person 112", "title": "Senior SalesForce Administrator", "employment": "Full Time", "scrumTeams": ["Salesforce"], "placeholder": false, "org": "Full Dev Org"}, "raj-kommera": {"id": "raj-kommera", "name": "Person 113", "title": "Senior Salesforce Developer", "employment": "Full Time", "scrumTeams": ["Salesforce"], "placeholder": false, "org": "Full Dev Org"}, "shishir-pokharel": {"id": "shishir-pokharel", "name": "Person 114", "title": "Director, Engineering", "employment": "Full Time", "scrumTeams": ["Vids", "Forums"], "placeholder": false, "org": "Full Dev Org"}, "angel-palomino-heras": {"id": "angel-palomino-heras", "name": "Person 115", "title": "Director, Engineering", "employment": "Full Time", "scrumTeams": ["Engineering AI", "Analytics", "Integrations"], "placeholder": false, "org": "Full Dev Org"}, "alberto-perez-galiano": {"id": "alberto-perez-galiano", "name": "Person 116", "title": "Sr. Engg Manager", "employment": "Full Time", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full Dev Org"}, "nataraja-prabhakara": {"id": "nataraja-prabhakara", "name": "Person 117", "title": "Director, Engineering", "employment": "Full Time", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full Dev Org"}, "pratap-kumar": {"id": "pratap-kumar", "name": "Person 118", "title": "Sr Director, Cloud Engineering", "employment": "Full Time", "scrumTeams": ["Cloud Engineering"], "placeholder": false, "org": "Full Dev Org"}, "francisco-neto": {"id": "francisco-neto", "name": "Person 119", "title": "Engg Manager", "employment": "Full Time", "scrumTeams": ["Eng Tools"], "placeholder": false, "org": "Full Dev Org"}, "venubabu-innamuri": {"id": "venubabu-innamuri", "name": "Person 120", "title": "Sr. Software Engineer", "employment": "Contractor", "scrumTeams": ["Go Live"], "placeholder": false, "org": "Full Dev Org"}, "alejandro-castera": {"id": "alejandro-castera", "name": "Person 121", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Vids", "Elite Studio"], "placeholder": false, "org": "Full Dev Org"}, "cobin-dopkeen": {"id": "cobin-dopkeen", "name": "Person 122", "title": "Engg Manager", "employment": "Full Time", "scrumTeams": ["Vids", "Forums"], "placeholder": false, "org": "Full Dev Org"}, "c-lucas-girard": {"id": "c-lucas-girard", "name": "Person 123", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Vids", "Elite Studio"], "placeholder": false, "org": "Full Dev Org"}, "randall-dryburgh": {"id": "randall-dryburgh", "name": "Person 124", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["Vids", "Elite Studio"], "placeholder": false, "org": "Full Dev Org"}, "cheng-kai-huang": {"id": "cheng-kai-huang", "name": "Person 125", "title": "Sr. Software Engineer", "employment": "Full Time", "scrumTeams": ["Vids", "Elite Studio"], "placeholder": false, "org": "Full Dev Org"}, "c-alejo-pereyra": {"id": "c-alejo-pereyra", "name": "Person 126", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Vids", "Forums"], "placeholder": false, "org": "Full Dev Org"}, "jose-viscasillas": {"id": "jose-viscasillas", "name": "Person 127", "title": "Senior Software Engineer", "employment": "Full Time", "scrumTeams": ["Vids", "Forums"], "placeholder": false, "org": "Full Dev Org"}, "dan-homerick": {"id": "dan-homerick", "name": "Person 128", "title": "Sr. Software Engineer", "employment": "Full Time", "scrumTeams": ["Vids", "Forums"], "placeholder": false, "org": "Full Dev Org"}, "c-tasso-ruas": {"id": "c-tasso-ruas", "name": "Person 129", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Vids", "Forums"], "placeholder": false, "org": "Full Dev Org"}, "c-jesus-daz": {"id": "c-jesus-daz", "name": "Person 130", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Vids", "Forums"], "placeholder": false, "org": "Full Dev Org"}, "felipe-ferreira": {"id": "felipe-ferreira", "name": "Person 131", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Vids", "Forums"], "placeholder": false, "org": "Full Dev Org"}, "mario-martinez": {"id": "mario-martinez", "name": "Person 132", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full Dev Org"}, "c-ramesh-balak": {"id": "c-ramesh-balak", "name": "Person 133", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full Dev Org"}, "c-alejandro-varon": {"id": "c-alejandro-varon", "name": "Person 134", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full Dev Org"}, "c-juan-gomez": {"id": "c-juan-gomez", "name": "Person 135", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full Dev Org"}, "pedro-hernandez": {"id": "pedro-hernandez", "name": "Person 136", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Analytics"], "placeholder": false, "org": "Full Dev Org"}, "juan-bernardez-pazo": {"id": "juan-bernardez-pazo", "name": "Person 137", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full Dev Org"}, "c-gregory-padron": {"id": "c-gregory-padron", "name": "Person 138", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full Dev Org"}, "c-jonathan-perez": {"id": "c-jonathan-perez", "name": "Person 139", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full Dev Org"}, "mayur-khadke": {"id": "mayur-khadke", "name": "Person 140", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full Dev Org"}, "jhon-nova": {"id": "jhon-nova", "name": "Person 141", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["EHub/Target"], "placeholder": false, "org": "Full Dev Org"}, "c-camilo-lopez": {"id": "c-camilo-lopez", "name": "Person 142", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full Dev Org"}, "c-rajesh-patel": {"id": "c-rajesh-patel", "name": "Person 143", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full Dev Org"}, "c-carlos-montoya": {"id": "c-carlos-montoya", "name": "Person 144", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Engineering AI"], "placeholder": false, "org": "Full Dev Org"}, "parag-sanghvi": {"id": "parag-sanghvi", "name": "Person 145", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["Engineering AI", "Integrations"], "placeholder": false, "org": "Full Dev Org"}, "alejandro-osorio": {"id": "alejandro-osorio", "name": "Person 146", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Engineering AI"], "placeholder": false, "org": "Full Dev Org"}, "c-harsh-panot": {"id": "c-harsh-panot", "name": "Person 147", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Salesforce"], "placeholder": false, "org": "Full Dev Org"}, "javier-vargas": {"id": "javier-vargas", "name": "Person 148", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full Dev Org"}, "c-oscar-ospina": {"id": "c-oscar-ospina", "name": "Person 149", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Integrations"], "placeholder": false, "org": "Full Dev Org"}, "jairo-diaz": {"id": "jairo-diaz", "name": "Person 150", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Engineering AI"], "placeholder": false, "org": "Full Dev Org"}, "ben-kinard": {"id": "ben-kinard", "name": "Person 151", "title": "Sr. Software Engineer", "employment": "Full Time", "scrumTeams": ["Engineering AI"], "placeholder": false, "org": "Full Dev Org"}, "abdulla-rubaid": {"id": "abdulla-rubaid", "name": "Person 152", "title": "Sr. Cloud Engineer", "employment": "Full Time", "scrumTeams": ["Cloud Engineering"], "placeholder": false, "org": "Full Dev Org"}, "praveen-gampala": {"id": "praveen-gampala", "name": "Person 153", "title": "Manager, DevOps", "employment": "Full Time", "scrumTeams": ["Cloud Engineering"], "placeholder": false, "org": "Full Dev Org"}, "c-marco-ruiz": {"id": "c-marco-ruiz", "name": "Person 154", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Cloud Engineering"], "placeholder": false, "org": "Full Dev Org"}, "lee-lopez": {"id": "lee-lopez", "name": "Person 155", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Cloud Engineering"], "placeholder": false, "org": "Full Dev Org"}, "chengyang-liu": {"id": "chengyang-liu", "name": "Person 156", "title": "Team Lead, Cloud Engineering", "employment": "Full Time", "scrumTeams": ["Cloud Engineering"], "placeholder": false, "org": "Full Dev Org"}, "c-jean-cristancho": {"id": "c-jean-cristancho", "name": "Person 157", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Cloud Engineering"], "placeholder": false, "org": "Full Dev Org"}, "c-gopal-singh": {"id": "c-gopal-singh", "name": "Person 158", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Cloud Engineering"], "placeholder": false, "org": "Full Dev Org"}, "ammar-khan": {"id": "ammar-khan", "name": "Person 159", "title": "Sr. Software Engineer", "employment": "Full Time", "scrumTeams": ["Eng Tools"], "placeholder": false, "org": "Full Dev Org"}, "c-cesar-roque": {"id": "c-cesar-roque", "name": "Person 160", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Engineering Support"], "placeholder": false, "org": "Full Dev Org"}, "purna-sangem": {"id": "purna-sangem", "name": "Person 161", "title": "Sr Support Engineer", "employment": "Full Time", "scrumTeams": ["Engineering Support"], "placeholder": false, "org": "Full Dev Org"}, "rajesh-walter": {"id": "rajesh-walter", "name": "Person 162", "title": "Sr. Engg Manager", "employment": "Full Time", "scrumTeams": ["EER"], "placeholder": false, "org": "Full Dev Org"}, "mayank-gupta": {"id": "mayank-gupta", "name": "Person 163", "title": "Director, Engineering", "employment": "Full Time", "scrumTeams": ["EER", "Go Live"], "placeholder": false, "org": "Full Dev Org"}, "piyush-punjak": {"id": "piyush-punjak", "name": "Person 164", "title": "Director, Engineering", "employment": "Full Time", "scrumTeams": ["Console", "Elite Studio"], "placeholder": false, "org": "Full Dev Org"}, "c-rodrigo-laporte": {"id": "c-rodrigo-laporte", "name": "Person 165", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["EER"], "placeholder": false, "org": "Full Dev Org"}, "avi-roig": {"id": "avi-roig", "name": "Person 166", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["EER"], "placeholder": false, "org": "Full Dev Org"}, "shabna-shaik": {"id": "shabna-shaik", "name": "Person 167", "title": "Sr. Software Engineer", "employment": "Full Time", "scrumTeams": ["EER"], "placeholder": false, "org": "Full Dev Org"}, "c-jonathan-arcila": {"id": "c-jonathan-arcila", "name": "Person 168", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["EER"], "placeholder": false, "org": "Full Dev Org"}, "himanshu-patel": {"id": "himanshu-patel", "name": "Person 169", "title": "Engg Manager", "employment": "Full Time", "scrumTeams": ["EER"], "placeholder": false, "org": "Full Dev Org"}, "luke-wage": {"id": "luke-wage", "name": "Person 170", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["EER"], "placeholder": false, "org": "Full Dev Org"}, "c-javier-stifano": {"id": "c-javier-stifano", "name": "Person 171", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Go Live"], "placeholder": false, "org": "Full Dev Org"}, "c-islam-mohammed": {"id": "c-islam-mohammed", "name": "Person 172", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Go Live"], "placeholder": false, "org": "Full Dev Org"}, "shuang-wu": {"id": "shuang-wu", "name": "Person 173", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["Go Live"], "placeholder": false, "org": "Full Dev Org"}, "kaleem-khan": {"id": "kaleem-khan", "name": "Person 174", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["Elite Studio"], "placeholder": false, "org": "Full Dev Org"}, "nnouka-stephen": {"id": "nnouka-stephen", "name": "Person 175", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Elite Studio", "Forums"], "placeholder": false, "org": "Full Dev Org"}, "ajay-pawar": {"id": "ajay-pawar", "name": "Person 176", "title": "Sr. Software Engineer", "employment": "Full Time", "scrumTeams": ["Console"], "placeholder": false, "org": "Full Dev Org"}, "pritish-kumar-dwibedi": {"id": "pritish-kumar-dwibedi", "name": "Person 177", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["Console"], "placeholder": false, "org": "Full Dev Org"}, "rajesh-kumar": {"id": "rajesh-kumar", "name": "Person 178", "title": "Sr. Software Engineer", "employment": "Full Time", "scrumTeams": ["Elite Studio"], "placeholder": false, "org": "Full Dev Org"}, "diego-gonzalez": {"id": "diego-gonzalez", "name": "Person 179", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full Dev Org"}, "jonathan-gil": {"id": "jonathan-gil", "name": "Person 180", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Elite Studio"], "placeholder": false, "org": "Full Dev Org"}, "shwetha-nimmala": {"id": "shwetha-nimmala", "name": "Person 181", "title": "Lead Engineer", "employment": "Full Time", "scrumTeams": ["Console"], "placeholder": false, "org": "Full Dev Org"}, "c-santiago-mejia": {"id": "c-santiago-mejia", "name": "Person 182", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full Dev Org"}, "jay-sunga": {"id": "jay-sunga", "name": "Person 183", "title": "Software Engineer", "employment": "Full Time", "scrumTeams": ["Elite Studio"], "placeholder": false, "org": "Full Dev Org"}, "swati-shaw": {"id": "swati-shaw", "name": "Person 184", "title": "Sr. Engg Manager", "employment": "Full Time", "scrumTeams": ["Appgen"], "placeholder": false, "org": "Full Dev Org"}, "amber-mahajan": {"id": "amber-mahajan", "name": "Person 185", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full Dev Org"}, "juan-david-aragon": {"id": "juan-david-aragon", "name": "Person 186", "title": "Senior Software Engineer", "employment": "Contractor", "scrumTeams": ["Console"], "placeholder": false, "org": "Full Dev Org"}, "chandrakant-bagewadi": {"id": "chandrakant-bagewadi", "name": "Person 187", "title": "Sr. Software Engineer", "employment": "Full Time", "scrumTeams": ["Appgen"], "placeholder": false, "org": "Full Dev Org"}, "placeholder-mahesh-kheny": {"id": "placeholder-mahesh-kheny", "name": "Person 188", "title": "Senior Vice President, Engineering", "employment": "", "scrumTeams": [], "placeholder": true, "org": "Full Dev Org"}, "placeholder-jaimini-joshi": {"id": "placeholder-jaimini-joshi", "name": "Person 189", "title": "SVP, Platform Engineering", "employment": "", "scrumTeams": [], "placeholder": true, "org": "Full Dev Org"}, "placeholder-kamal": {"id": "placeholder-kamal", "name": "Person 190", "title": "", "employment": "", "scrumTeams": [], "placeholder": true, "org": "Full Dev Org", "dottedLine": "Person 001"}}, "children": {"placeholder-mahesh-kheny": ["homer-santos"], "homer-santos": ["james-gomez", "raj-kommera"], "placeholder-jaimini-joshi": ["alberto-perez-galiano", "angel-palomino-heras", "francisco-neto", "placeholder-kamal", "nataraja-prabhakara", "pratap-kumar", "shishir-pokharel", "venubabu-innamuri"], "shishir-pokharel": ["alejandro-castera", "c-lucas-girard", "cheng-kai-huang", "cobin-dopkeen", "randall-dryburgh"], "cobin-dopkeen": ["c-alejo-pereyra", "c-jesus-daz", "c-tasso-ruas", "dan-homerick", "felipe-ferreira", "jose-viscasillas"], "alberto-perez-galiano": ["c-alejandro-varon", "c-juan-gomez", "c-ramesh-balak", "mario-martinez", "pedro-hernandez"], "nataraja-prabhakara": ["c-gregory-padron", "c-jonathan-perez", "juan-bernardez-pazo", "mayur-khadke"], "juan-bernardez-pazo": ["jhon-nova"], "angel-palomino-heras": ["alejandro-osorio", "ben-kinard", "c-camilo-lopez", "c-carlos-montoya", "c-harsh-panot", "c-oscar-ospina", "c-rajesh-patel", "jairo-diaz", "javier-vargas", "parag-sanghvi"], "pratap-kumar": ["abdulla-rubaid", "praveen-gampala"], "praveen-gampala": ["c-gopal-singh", "c-jean-cristancho", "c-marco-ruiz", "chengyang-liu", "lee-lopez"], "francisco-neto": ["ammar-khan", "c-cesar-roque", "purna-sangem"], "placeholder-kamal": ["mayank-gupta", "piyush-punjak", "rajesh-walter"], "mayank-gupta": ["avi-roig", "c-islam-mohammed", "c-javier-stifano", "c-jonathan-arcila", "c-rodrigo-laporte", "himanshu-patel", "luke-wage", "shabna-shaik", "shuang-wu"], "piyush-punjak": ["ajay-pawar", "amber-mahajan", "c-santiago-mejia", "diego-gonzalez", "jay-sunga", "jonathan-gil", "juan-david-aragon", "kaleem-khan", "nnouka-stephen", "pritish-kumar-dwibedi", "rajesh-kumar", "shwetha-nimmala", "swati-shaw"], "swati-shaw": ["chandrakant-bagewadi"], "jayesh-sahasi": ["placeholder-jaimini-joshi", "placeholder-mahesh-kheny"]}}, "TPM": {"top": "jayesh-sahasi", "nodes": {"jayesh-sahasi": {"id": "jayesh-sahasi", "name": "Person 001", "title": "EVP Product & CTO", "employment": "Full Time", "scrumTeams": [], "placeholder": false, "org": "TPM"}, "kashan-babar": {"id": "kashan-babar", "name": "Person 191", "title": "Scrum Master", "employment": "Full Time", "scrumTeams": ["TPM"], "placeholder": false, "org": "TPM"}, "ishwinder-walia": {"id": "ishwinder-walia", "name": "Person 192", "title": "Scrum Master", "employment": "Full Time", "scrumTeams": ["TPM"], "placeholder": false, "org": "TPM"}, "c-bhagyashree-more": {"id": "c-bhagyashree-more", "name": "Person 193", "title": "Scrum Master", "employment": "Contractor", "scrumTeams": ["TPM"], "placeholder": false, "org": "TPM"}, "placeholder-jagjit-singh": {"id": "placeholder-jagjit-singh", "name": "Person 194", "title": "Director, Program Management", "employment": "", "scrumTeams": [], "placeholder": true, "org": "TPM"}}, "children": {"placeholder-jagjit-singh": ["c-bhagyashree-more", "ishwinder-walia", "kashan-babar"], "jayesh-sahasi": ["placeholder-jagjit-singh"]}}}, "scrum": {"Automation": {"Dev": [], "QA": [{"org": "Full QA Org", "id": "ashish-oza", "name": "Person 017", "title": "Contractor – Director, QA", "employment": "Contractor"}, {"org": "Full QA Org", "id": "manak-choyal", "name": "Person 020", "title": "Contractor – Lead QA Automation", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-nikhil-bornare", "name": "Person 018", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-chetan-kushwah", "name": "Person 021", "title": "Contractor – QA Automation", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-divya-kag", "name": "Person 016", "title": "Contractor – QA Automation", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-hari-prasad", "name": "Person 012", "title": "Contractor – QA Automation", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-kumar-saurabh", "name": "Person 025", "title": "Contractor – QA Automation", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-mohit-talera", "name": "Person 019", "title": "Contractor – QA Automation", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-srijan-parihar", "name": "Person 024", "title": "Contractor – QA", "employment": "Contractor"}, {"org": "Full QA Org", "id": "sumeet-patidar", "name": "Person 022", "title": "Contractor – QA Automation", "employment": "Contractor"}, {"org": "Full QA Org", "id": "vaishali-jaiswal", "name": "Person 023", "title": "Contractor – QA Automation", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Console": {"Dev": [{"org": "Full Dev Org", "id": "piyush-punjak", "name": "Person 164", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "pritish-kumar-dwibedi", "name": "Person 177", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "shwetha-nimmala", "name": "Person 181", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "ajay-pawar", "name": "Person 176", "title": "Sr. Software Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "amber-mahajan", "name": "Person 185", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-santiago-mejia", "name": "Person 182", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "diego-gonzalez", "name": "Person 179", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "juan-david-aragon", "name": "Person 186", "title": "Senior Software Engineer", "employment": "Contractor"}], "QA": [{"org": "Full QA Org", "id": "jyothi-mittapalli", "name": "Person 044", "title": "Senior Lead QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "vimala-gandham", "name": "Person 033", "title": "Senior Lead QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "alumelu-govindareddy", "name": "Person 035", "title": "Senior QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "manjeet-singh", "name": "Person 030", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "nurlan-shukurlu", "name": "Person 039", "title": "Senior QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "prakash-mandwal", "name": "Person 028", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "abhijeet-joshi", "name": "Person 038", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-gargeya-borgaonkar", "name": "Person 029", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-mohini-verma", "name": "Person 036", "title": "Contractor (QA Engineer)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-sourabh-samediya", "name": "Person 042", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-surbhi-porwal", "name": "Person 027", "title": "QA Engineer (InfoHorizon)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-tushar-gaurawat", "name": "Person 034", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-vedika-soni", "name": "Person 041", "title": "Contractor (QA Engineer)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "priyanka-jain", "name": "Person 032", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "rahul-yadav", "name": "Person 031", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-abhishek-tanwar", "name": "Person 026", "title": "Contractor (QA)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-ajay-pal", "name": "Person 043", "title": "Contractor (QA)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-ashwijt-khaire", "name": "Person 040", "title": "Contractor (QA)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-yashdeep-singh", "name": "Person 037", "title": "Contractor (QA)", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Forums": {"Dev": [{"org": "Full Dev Org", "id": "shishir-pokharel", "name": "Person 114", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "cobin-dopkeen", "name": "Person 122", "title": "Engg Manager", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "c-alejo-pereyra", "name": "Person 126", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-jesus-daz", "name": "Person 130", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-tasso-ruas", "name": "Person 129", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "dan-homerick", "name": "Person 128", "title": "Sr. Software Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "felipe-ferreira", "name": "Person 131", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "jose-viscasillas", "name": "Person 127", "title": "Senior Software Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "nnouka-stephen", "name": "Person 175", "title": "Senior Software Engineer", "employment": "Contractor"}], "QA": [{"org": "Full QA Org", "id": "fong-xiong", "name": "Person 080", "title": "Senior QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "manjeet-singh", "name": "Person 030", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Vids": {"Dev": [{"org": "Full Dev Org", "id": "shishir-pokharel", "name": "Person 114", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "cobin-dopkeen", "name": "Person 122", "title": "Engg Manager", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "randall-dryburgh", "name": "Person 124", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "alejandro-castera", "name": "Person 121", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-alejo-pereyra", "name": "Person 126", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-jesus-daz", "name": "Person 130", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-lucas-girard", "name": "Person 123", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-tasso-ruas", "name": "Person 129", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "cheng-kai-huang", "name": "Person 125", "title": "Sr. Software Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "dan-homerick", "name": "Person 128", "title": "Sr. Software Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "felipe-ferreira", "name": "Person 131", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "jose-viscasillas", "name": "Person 127", "title": "Senior Software Engineer", "employment": "Full Time"}], "QA": [{"org": "Full QA Org", "id": "jyothi-mittapalli", "name": "Person 044", "title": "Senior Lead QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "manjeet-singh", "name": "Person 030", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "abhijeet-joshi", "name": "Person 038", "title": "Contractor – QA Engineer", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "VC": {"Dev": [], "QA": [{"org": "Full QA Org", "id": "sandeep-chaubey", "name": "Person 057", "title": "Contractor – QA Lead", "employment": "Contractor"}, {"org": "Full QA Org", "id": "shailja-singh", "name": "Person 045", "title": "Senior QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "c-anurag-padiyar", "name": "Person 051", "title": "Contractor (QA Engineer)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-subhani-singh", "name": "Person 059", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "nikhil-bhatt", "name": "Person 060", "title": "Contractor – QA Engineer", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "EHub/Target": {"Dev": [{"org": "Full Dev Org", "id": "nataraja-prabhakara", "name": "Person 117", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "juan-bernardez-pazo", "name": "Person 137", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "mayur-khadke", "name": "Person 140", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "c-gregory-padron", "name": "Person 138", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-jonathan-perez", "name": "Person 139", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "jhon-nova", "name": "Person 141", "title": "Senior Software Engineer", "employment": "Contractor"}], "QA": [{"org": "Full QA Org", "id": "yan-sarnovskiy", "name": "Person 048", "title": "Lead QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "shailja-singh", "name": "Person 045", "title": "Senior QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "yadav-singh-parmar", "name": "Person 056", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "ajay-kumar-gupta", "name": "Person 055", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-gourav-tomar", "name": "Person 053", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-shubhi-badole", "name": "Person 050", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-subhani-singh", "name": "Person 059", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "keshav-jaiswal", "name": "Person 052", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "mohit-sengar", "name": "Person 046", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "nikhil-bhatt", "name": "Person 060", "title": "Contractor – QA Engineer", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Go Live": {"Dev": [{"org": "Full Dev Org", "id": "mayank-gupta", "name": "Person 163", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "shuang-wu", "name": "Person 173", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "c-islam-mohammed", "name": "Person 172", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-javier-stifano", "name": "Person 171", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "venubabu-innamuri", "name": "Person 120", "title": "Sr. Software Engineer", "employment": "Contractor"}], "QA": [{"org": "Full QA Org", "id": "sandeep-chaubey", "name": "Person 057", "title": "Contractor – QA Lead", "employment": "Contractor"}, {"org": "Full QA Org", "id": "syamala-bantupalli", "name": "Person 054", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-anurag-padiyar", "name": "Person 051", "title": "Contractor (QA Engineer)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-apurva-choudary", "name": "Person 049", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "nikhila-aradhyula", "name": "Person 058", "title": "QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "c-anshul-sahu", "name": "Person 047", "title": "Contractor (QA)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-megha-upadhayay", "name": "Person 061", "title": "Contractor (QA)", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Presenter": {"Dev": [], "QA": [{"org": "Full QA Org", "id": "c-akshay-mandloi", "name": "Person 065", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-ashish-kaslikar", "name": "Person 109", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-neeti-sharma", "name": "Person 062", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-nikhil-sharma", "name": "Person 097", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-rahul-sharma", "name": "Person 095", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-rajkamal-karpenter", "name": "Person 108", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-shubham-chandra", "name": "Person 104", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-shubham-kumawat", "name": "Person 101", "title": "Contractor (QA)", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Eng Tools": {"Dev": [{"org": "Full Dev Org", "id": "francisco-neto", "name": "Person 119", "title": "Engg Manager", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "ammar-khan", "name": "Person 159", "title": "Sr. Software Engineer", "employment": "Full Time"}], "QA": [{"org": "Full QA Org", "id": "marina-belova", "name": "Person 086", "title": "Senior QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "c-priya-chouhan", "name": "Person 090", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "pushpendra-tiwari", "name": "Person 063", "title": "Contractor – QA Engineer", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Integrations": {"Dev": [{"org": "Full Dev Org", "id": "angel-palomino-heras", "name": "Person 115", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "parag-sanghvi", "name": "Person 145", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "c-camilo-lopez", "name": "Person 142", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-oscar-ospina", "name": "Person 149", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-rajesh-patel", "name": "Person 143", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "javier-vargas", "name": "Person 148", "title": "Senior Software Engineer", "employment": "Contractor"}], "QA": [{"org": "Full QA Org", "id": "olga-grama", "name": "Person 073", "title": "Lead QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "abel-cruz", "name": "Person 092", "title": "Senior QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "c-kanika-dixit", "name": "Person 075", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-kushal-saitwal", "name": "Person 098", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "chitralekha-dwivedi", "name": "Person 064", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-shruti-joshi", "name": "Person 082", "title": "Contractor (QA)", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Elite Admin": {"Dev": [], "QA": [{"org": "Full QA Org", "id": "helly-tanna", "name": "Person 072", "title": "Lead QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "preeti-sharma", "name": "Person 096", "title": "Lead QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "rohit-jha", "name": "Person 076", "title": "Contractor – Sr. QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "ajay-yadav", "name": "Person 100", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-akshay-patidar", "name": "Person 068", "title": "Contractor (QA Engineer)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-aniruddh-dongariya", "name": "Person 103", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-bhagwan-soni", "name": "Person 077", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-bhushan-mahire", "name": "Person 071", "title": "Contractor (QA Engineer)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-divya-sharma", "name": "Person 106", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-pooja-thakur", "name": "Person 091", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-prerna-sharma", "name": "Person 066", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-rishabh-joshi", "name": "Person 070", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-rishi-shrivastava", "name": "Person 084", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-shobhit-shrivas", "name": "Person 083", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "sanjeev-gupta", "name": "Person 105", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-roma-jain", "name": "Person 089", "title": "Contractor (QA)", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Analytics": {"Dev": [{"org": "Full Dev Org", "id": "angel-palomino-heras", "name": "Person 115", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "alberto-perez-galiano", "name": "Person 116", "title": "Sr. Engg Manager", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "c-alejandro-varon", "name": "Person 134", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-juan-gomez", "name": "Person 135", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-ramesh-balak", "name": "Person 133", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "mario-martinez", "name": "Person 132", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "pedro-hernandez", "name": "Person 136", "title": "Senior Software Engineer", "employment": "Contractor"}], "QA": [{"org": "Full QA Org", "id": "pavel-preyomyshev", "name": "Person 085", "title": "Lead QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "c-mayank-khede", "name": "Person 093", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-ravi-singh", "name": "Person 074", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-shreya-raghuwanshi", "name": "Person 094", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "gurmeet-singh", "name": "Person 067", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "lilia-tulei", "name": "Person 079", "title": "QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "c-harsh-parasher", "name": "Person 099", "title": "Contractor (QA)", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-tarun-sakalley", "name": "Person 081", "title": "QA Contractor", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Engineering AI": {"Dev": [{"org": "Full Dev Org", "id": "angel-palomino-heras", "name": "Person 115", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "parag-sanghvi", "name": "Person 145", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "alejandro-osorio", "name": "Person 146", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "ben-kinard", "name": "Person 151", "title": "Sr. Software Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "c-carlos-montoya", "name": "Person 144", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "jairo-diaz", "name": "Person 150", "title": "Senior Software Engineer", "employment": "Contractor"}], "QA": [{"org": "Full QA Org", "id": "helly-tanna", "name": "Person 072", "title": "Lead QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "c-prajjawal-saxena", "name": "Person 102", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-rishi-shrivastava", "name": "Person 084", "title": "Contractor – QA Engineer", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Elite Studio": {"Dev": [{"org": "Full Dev Org", "id": "piyush-punjak", "name": "Person 164", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "kaleem-khan", "name": "Person 174", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "randall-dryburgh", "name": "Person 124", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "alejandro-castera", "name": "Person 121", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-lucas-girard", "name": "Person 123", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "cheng-kai-huang", "name": "Person 125", "title": "Sr. Software Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "jonathan-gil", "name": "Person 180", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "nnouka-stephen", "name": "Person 175", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "rajesh-kumar", "name": "Person 178", "title": "Sr. Software Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "jay-sunga", "name": "Person 183", "title": "Software Engineer", "employment": "Full Time"}], "QA": [{"org": "Full QA Org", "id": "paul-zarzecki", "name": "Person 078", "title": "QA Manager", "employment": "Full Time"}, {"org": "Full QA Org", "id": "jyothi-dasari", "name": "Person 107", "title": "QA Lead", "employment": "Contractor"}, {"org": "Full QA Org", "id": "fong-xiong", "name": "Person 080", "title": "Senior QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "marina-belova", "name": "Person 086", "title": "Senior QA Engineer", "employment": "Full Time"}, {"org": "Full QA Org", "id": "c-priya-chouhan", "name": "Person 090", "title": "Contractor – QA Engineer", "employment": "Contractor"}, {"org": "Full QA Org", "id": "c-sumit-verma", "name": "Person 088", "title": "Contractor (QA)", "employment": "Contractor"}], "Product": [], "TPM": [], "Other": []}, "Salesforce": {"Dev": [{"org": "Full Dev Org", "id": "homer-santos", "name": "Person 111", "title": "Engineering Manager", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "c-harsh-panot", "name": "Person 147", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "james-gomez", "name": "Person 112", "title": "Senior SalesForce Administrator", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "raj-kommera", "name": "Person 113", "title": "Senior Salesforce Developer", "employment": "Full Time"}], "QA": [], "Product": [], "TPM": [], "Other": []}, "Cloud Engineering": {"Dev": [{"org": "Full Dev Org", "id": "pratap-kumar", "name": "Person 118", "title": "Sr Director, Cloud Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "praveen-gampala", "name": "Person 153", "title": "Manager, DevOps", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "chengyang-liu", "name": "Person 156", "title": "Team Lead, Cloud Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "abdulla-rubaid", "name": "Person 152", "title": "Sr. Cloud Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "c-gopal-singh", "name": "Person 158", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-jean-cristancho", "name": "Person 157", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-marco-ruiz", "name": "Person 154", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "lee-lopez", "name": "Person 155", "title": "Senior Software Engineer", "employment": "Contractor"}], "QA": [], "Product": [], "TPM": [], "Other": []}, "Engineering Support": {"Dev": [{"org": "Full Dev Org", "id": "c-cesar-roque", "name": "Person 160", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "purna-sangem", "name": "Person 161", "title": "Sr Support Engineer", "employment": "Full Time"}], "QA": [], "Product": [], "TPM": [], "Other": []}, "EER": {"Dev": [{"org": "Full Dev Org", "id": "mayank-gupta", "name": "Person 163", "title": "Director, Engineering", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "himanshu-patel", "name": "Person 169", "title": "Engg Manager", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "rajesh-walter", "name": "Person 162", "title": "Sr. Engg Manager", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "avi-roig", "name": "Person 166", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "luke-wage", "name": "Person 170", "title": "Lead Engineer", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "c-jonathan-arcila", "name": "Person 168", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "c-rodrigo-laporte", "name": "Person 165", "title": "Senior Software Engineer", "employment": "Contractor"}, {"org": "Full Dev Org", "id": "shabna-shaik", "name": "Person 167", "title": "Sr. Software Engineer", "employment": "Full Time"}], "QA": [], "Product": [], "TPM": [], "Other": []}, "Appgen": {"Dev": [{"org": "Full Dev Org", "id": "swati-shaw", "name": "Person 184", "title": "Sr. Engg Manager", "employment": "Full Time"}, {"org": "Full Dev Org", "id": "chandrakant-bagewadi", "name": "Person 187", "title": "Sr. Software Engineer", "employment": "Full Time"}], "QA": [], "Product": [], "TPM": [], "Other": []}, "TPM": {"Dev": [], "QA": [], "Product": [], "TPM": [{"org": "TPM", "id": "c-bhagyashree-more", "name": "Person 193", "title": "Scrum Master", "employment": "Contractor"}, {"org": "TPM", "id": "ishwinder-walia", "name": "Person 192", "title": "Scrum Master", "employment": "Full Time"}, {"org": "TPM", "id": "kashan-babar", "name": "Person 191", "title": "Scrum Master", "employment": "Full Time"}], "Other": []}}, "missing": {"Product-Design": [], "Full QA Org": [], "Full Dev Org": [], "TPM": []}, "homeDrs": [{"name": "Person 011", "title": "Sr. Vice President Product Management", "employment": "", "org": "Product-Design", "nodeId": "placeholder-steve-sims"}, {"name": "Person 110", "title": "Vice President QA Engineering", "employment": "", "org": "Full QA Org", "nodeId": "placeholder-oleg-massakovskyy"}, {"name": "Person 189", "title": "SVP, Platform Engineering", "employment": "", "org": "Full Dev Org", "nodeId": "placeholder-jaimini-joshi"}, {"name": "Person 188", "title": "Senior Vice President, Engineering", "employment": "", "org": "Full Dev Org", "nodeId": "placeholder-mahesh-kheny"}, {"name": "Person 194", "title": "Director, Program Management", "employment": "", "org": "TPM", "nodeId": "placeholder-jagjit-singh"}]};
+
+let state = {
+    currentOrg: null,
+    currentNodeId: null,
+    breadcrumb: [],
+    fteOnly: false,
+    scrumView: null,
+    lastOrgNodeId: null,
+    isHome: true,
+};
+
+// ── Color palette for team pills ──
+const TEAM_COLORS = [
+    '#3182ce','#e94560','#38a169','#d69e2e','#805ad5','#dd6b20',
+    '#319795','#b83280','#2b6cb0','#c05621','#2f855a','#6b46c1'
+];
+
+function teamColor(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = ((hash << 5) - hash) + name.charCodeAt(i);
+    return TEAM_COLORS[Math.abs(hash) % TEAM_COLORS.length];
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──
+function init() {
+    const sel = document.getElementById('orgSelect');
+    // Add Home option first
+    const homeOpt = document.createElement('option');
+    homeOpt.value = '__HOME__';
+    homeOpt.textContent = 'Home (All Orgs)';
+    sel.appendChild(homeOpt);
+    const orgNames = Object.keys(DATA.orgs);
+    orgNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+    });
+    goHome();
+}
+
+function switchOrg(orgName) {
+    if (orgName === '__HOME__') { goHome(); return; }
+    state.currentOrg = orgName;
+    state.scrumView = null;
+    state.isHome = false;
+    navigateTo(DATA.orgs[orgName].top);
+}
+
+function goHome() {
+    state.isHome = true;
+    state.scrumView = null;
+    state.currentOrg = null;
+    document.getElementById('orgSelect').value = '__HOME__';
+    document.getElementById('backToOrg').style.display = 'none';
+    renderHome();
+}
+
+function renderHome() {
+    // Get Jayesh's info from the first org dataset
+    const firstOrg = Object.values(DATA.orgs)[0];
+    const jayesh = firstOrg ? firstOrg.nodes[firstOrg.top] : null;
+    const jayeshName = jayesh ? jayesh.name : 'Leader';
+    const jayeshTitle = jayesh ? jayesh.title : '';
+
+    const bc = document.getElementById('breadcrumb');
+    bc.innerHTML = '<span class="current">' + escHtml(jayeshName) + (jayeshTitle ? ' — ' + escHtml(jayeshTitle) : '') + '</span>';
+
+    let html = '<div class="manager-section">';
+    html += '<div class="manager-card">';
+    html += '<div class="name">' + escHtml(jayeshName) + '</div>';
+    if (jayeshTitle) html += '<div class="title">' + escHtml(jayeshTitle) + '</div>';
+    html += '<span class="badge badge-fte">FTE</span>';
+    html += '</div>';
+    html += '<div class="connector"></div>';
+    html += '</div>';
+
+    const drs = DATA.homeDrs || [];
+    html += '<div class="reports-label">' + drs.length + ' direct reports (across all orgs)</div>';
+    html += '<div class="reports-grid">';
+    drs.forEach(dr => {
+        const badge = isContractor(dr.employment)
+            ? '<span class="badge badge-contractor">Contractor</span>'
+            : '<span class="badge badge-fte">FTE</span>';
+        html += '<div class="person-card" onclick="switchToOrgDr(\'' + escHtml(dr.org) + '\',\'' + escHtml(dr.nodeId) + '\')">';
+        html += '<div class="name">' + escHtml(dr.name) + '</div>';
+        if (dr.title) html += '<div class="title">' + escHtml(dr.title) + '</div>';
+        html += badge;
+        html += '<div class="dr-count" style="color:#3182ce">' + escHtml(dr.org) + '</div>';
+        html += '</div>';
+    });
+    html += '</div>';
+
+    document.getElementById('mainContent').innerHTML = html;
+    // Show total headcount across all orgs
+    let total = 0, fte = 0, contractors = 0;
+    for (const [orgName, org] of Object.entries(DATA.orgs)) {
+        for (const [id, node] of Object.entries(org.nodes)) {
+            if (node.placeholder) continue;
+            total++; if (isContractor(node.employment)) contractors++; else fte++;
+        }
+    }
+    const el = document.getElementById('headcount');
+    el.textContent = total + ' people (' + fte + ' FTE, ' + contractors + ' contractors) across all orgs';
+}
+
+function switchToOrgDr(orgName, nodeId) {
+    state.isHome = false;
+    state.currentOrg = orgName;
+    document.getElementById('orgSelect').value = orgName;
+    navigateTo(nodeId);
+}
+
+function toggleFTE() {
+    state.fteOnly = !state.fteOnly;
+    const btn = document.getElementById('fteToggle');
+    btn.classList.toggle('active', state.fteOnly);
+    if (state.scrumView) {
+        showScrumView(state.scrumView);
+    } else {
+        render();
+    }
+}
+
+function isContractor(emp) {
+    if (!emp) return false;
+    const e = emp.toLowerCase();
+    return e.includes('contract') || e.includes('vendor') || e.includes('consult');
+}
+
+// ── Navigation ──
+function navigateTo(nodeId) {
+    if (!state.currentOrg) return;
+    const org = DATA.orgs[state.currentOrg];
+    if (!org || !org.nodes[nodeId]) return;
+    state.isHome = false;
+
+    state.scrumView = null;
+    document.getElementById('backToOrg').style.display = 'none';
+
+    // Build breadcrumb
+    const trail = [];
+    let cur = nodeId;
+    const visited = new Set();
+    while (cur && org.nodes[cur] && !visited.has(cur)) {
+        visited.add(cur);
+        trail.unshift(cur);
+        const node = org.nodes[cur];
+        // Find parent
+        let parent = null;
+        for (const [pid, children] of Object.entries(org.children)) {
+            if (children.includes(cur)) { parent = pid; break; }
+        }
+        cur = parent;
+    }
+    state.breadcrumb = trail;
+    state.currentNodeId = nodeId;
+    state.lastOrgNodeId = nodeId;
+    render();
+}
+
+function goTop() {
+    if (!state.currentOrg) { goHome(); return; }
+    navigateTo(DATA.orgs[state.currentOrg].top);
+}
+
+function goUp() {
+    if (state.breadcrumb.length > 1) {
+        navigateTo(state.breadcrumb[state.breadcrumb.length - 2]);
+    }
+}
+
+function backToOrg() {
+    if (state.lastOrgNodeId) {
+        navigateTo(state.lastOrgNodeId);
+    }
+}
+
+function doSearch() {
+    const q = document.getElementById('searchBox').value.trim().toLowerCase();
+    if (!q) return;
+    const org = DATA.orgs[state.currentOrg];
+    // Search across all orgs
+    for (const [orgName, orgData] of Object.entries(DATA.orgs)) {
+        for (const [nid, node] of Object.entries(orgData.nodes)) {
+            const name = node.name.toLowerCase();
+            if (name === q || name.startsWith(q) || name.includes(q)) {
+                state.currentOrg = orgName;
+                document.getElementById('orgSelect').value = orgName;
+                navigateTo(nid);
+                return;
+            }
+        }
+    }
+    alert('No match found for "' + q + '"');
+}
+
+// ── Scrum View ──
+function showScrumView(teamName) {
+    state.scrumView = teamName;
+    state.lastOrgNodeId = state.currentNodeId;
+    document.getElementById('backToOrg').style.display = '';
+    renderScrum(teamName);
+}
+
+function navigateToOrgCard(orgName, nodeId) {
+    state.currentOrg = orgName;
+    document.getElementById('orgSelect').value = orgName;
+    navigateTo(nodeId);
+}
+
+function renderScrum(teamName) {
+    const groups = DATA.scrum[teamName];
+    if (!groups) {
+        document.getElementById('mainContent').innerHTML = '<div class="empty-state">No data for team: ' + escHtml(teamName) + '</div>';
+        return;
+    }
+
+    // Update breadcrumb
+    const bc = document.getElementById('breadcrumb');
+    bc.innerHTML = '<span class="current">#' + escHtml(teamName) + '</span>';
+
+    let html = '<div class="scrum-view">';
+    html += '<div class="scrum-header">#' + escHtml(teamName) + '</div>';
+
+    const disciplineOrder = ['Dev', 'Product', 'QA', 'TPM', 'Other'];
+    const disciplineLabels = {
+        'Dev': 'Development',
+        'Product': 'Product & Design',
+        'QA': 'Quality Assurance',
+        'TPM': 'Technical Program Management',
+        'Other': 'Other',
+    };
+
+    for (const disc of disciplineOrder) {
+        let members = groups[disc] || [];
+        if (state.fteOnly) {
+            members = members.filter(m => !isContractor(m.employment));
+        }
+        if (members.length === 0) continue;
+
+        html += '<div class="discipline-section">';
+        html += '<div class="discipline-title">' + escHtml(disciplineLabels[disc] || disc) + '</div>';
+
+        members.forEach((m, idx) => {
+            const isLead = idx === 0;
+            const leadLabel = isLead ? ' (Lead)' : '';
+            const badge = isContractor(m.employment)
+                ? '<span class="badge badge-contractor">Contractor</span>'
+                : '<span class="badge badge-fte">FTE</span>';
+            html += '<div class="scrum-member' + (isLead ? ' is-lead' : '') + '">';
+            html += '<a onclick="navigateToOrgCard(\'' + escHtml(m.org) + "','" + escHtml(m.id) + '\')">' + escHtml(m.name) + leadLabel + '</a>';
+            html += ' ' + badge;
+            if (m.title) html += ' <span class="member-title">' + escHtml(m.title) + '</span>';
+            html += '</div>';
+        });
+
+        html += '</div>';
+    }
+
+    html += '</div>';
+    document.getElementById('mainContent').innerHTML = html;
+    updateHeadcount();
+}
+
+// ── Render Org View ──
+function render() {
+    const org = DATA.orgs[state.currentOrg];
+    const nodeId = state.currentNodeId;
+    const node = org.nodes[nodeId];
+    if (!node) return;
+
+    // Breadcrumb
+    const bc = document.getElementById('breadcrumb');
+    let bcHtml = '';
+    state.breadcrumb.forEach((id, i) => {
+        const n = org.nodes[id];
+        if (!n) return;
+        if (i > 0) bcHtml += '<span>&rsaquo;</span> ';
+        if (i === state.breadcrumb.length - 1) {
+            bcHtml += '<span class="current">' + escHtml(n.name) + '</span>';
+        } else {
+            bcHtml += '<a onclick="navigateTo(\'' + escHtml(id) + '\')">' + escHtml(n.name) + '</a> ';
+        }
+    });
+    bc.innerHTML = bcHtml;
+
+    // Manager card
+    const empBadge = isContractor(node.employment)
+        ? '<span class="badge badge-contractor">Contractor</span>'
+        : '<span class="badge badge-fte">FTE</span>';
+
+    let teamPills = '';
+    if (node.scrumTeams && node.scrumTeams.length) {
+        teamPills = '<div class="teams">' + node.scrumTeams.map(t =>
+            '<a class="team-pill" style="background:' + teamColor(t) + '22;color:' + teamColor(t) + '" onclick="showScrumView(\'' + escHtml(t).replace(/'/g,"\\\\'") + '\')">#' + escHtml(t) + '</a>'
+        ).join('') + '</div>';
+    }
+
+    let html = '<div class="manager-section">';
+    html += '<div class="manager-card">';
+    html += '<div class="name">' + escHtml(node.name) + '</div>';
+    if (node.title) html += '<div class="title">' + escHtml(node.title) + '</div>';
+    html += empBadge;
+    html += teamPills;
+    html += '</div>';
+
+    // Get children
+    let children = (org.children[nodeId] || []).map(id => org.nodes[id]).filter(Boolean);
+    if (state.fteOnly) {
+        children = children.filter(c => !isContractor(c.employment));
+    }
+
+    if (children.length > 0) {
+        html += '<div class="connector"></div>';
+        html += '</div>';
+
+        html += '<div class="reports-label">' + children.length + ' direct report' + (children.length > 1 ? 's' : '') + '</div>';
+        html += '<div class="reports-grid">';
+
+        children.forEach(child => {
+            const cBadge = isContractor(child.employment)
+                ? '<span class="badge badge-contractor">Contractor</span>'
+                : '<span class="badge badge-fte">FTE</span>';
+
+            let cTeams = '';
+            if (child.scrumTeams && child.scrumTeams.length) {
+                cTeams = '<div class="teams">' + child.scrumTeams.map(t =>
+                    '<a class="team-pill" style="background:' + teamColor(t) + '22;color:' + teamColor(t) + '" onclick="event.stopPropagation();showScrumView(\'' + escHtml(t).replace(/'/g,"\\\\'") + '\')">#' + escHtml(t) + '</a>'
+                ).join('') + '</div>';
+            }
+
+            // Count all descendants (respecting FTE filter)
+            let drCount = countReports(org, child.id);
+            let drLabel = drCount > 0 ? '<div class="dr-count">' + drCount + ' report' + (drCount > 1 ? 's' : '') + '</div>' : '';
+
+            const phClass = child.placeholder ? ' placeholder' : '';
+            html += '<div class="person-card' + phClass + '" onclick="navigateTo(\'' + escHtml(child.id) + '\')">';
+            html += '<div class="name">' + escHtml(child.name) + '</div>';
+            if (child.title) html += '<div class="title">' + escHtml(child.title) + '</div>';
+            html += cBadge;
+            if (child.dottedLine) html += '<div class="dr-count" style="color:#805ad5;font-style:italic">Dotted-line: ' + escHtml(child.dottedLine) + '</div>';
+            html += cTeams;
+            html += drLabel;
+            html += '</div>';
+        });
+
+        html += '</div>';
+    } else {
+        html += '</div>';
+        html += '<div class="empty-state">No direct reports</div>';
+    }
+
+    // Missing titles section
+    const missing = DATA.missing[state.currentOrg] || [];
+    if (missing.length > 0) {
+        html += '<div class="missing-section">';
+        html += '<div class="missing-toggle" onclick="this.nextElementSibling.classList.toggle(\'open\')">';
+        html += '&#9888; ' + missing.length + ' people without titles in ' + escHtml(state.currentOrg) + ' (click to expand)';
+        html += '</div>';
+        html += '<div class="missing-list"><ul>';
+        missing.forEach(name => {
+            html += '<li>' + escHtml(name) + '</li>';
+        });
+        html += '</ul></div></div>';
+    }
+
+    document.getElementById('mainContent').innerHTML = html;
+    updateHeadcount();
+}
+
+function countReports(org, nodeId) {
+    let children = org.children[nodeId] || [];
+    if (state.fteOnly) {
+        children = children.filter(id => {
+            const n = org.nodes[id];
+            return n && !isContractor(n.employment);
+        });
+    }
+    let count = children.length;
+    children.forEach(cid => {
+        count += countReports(org, cid);
+    });
+    return count;
+}
+
+function updateHeadcount() {
+    const org = DATA.orgs[state.currentOrg];
+    let total = 0, fte = 0, contractors = 0;
+    for (const [id, node] of Object.entries(org.nodes)) {
+        if (node.placeholder) continue;
+        total++;
+        if (isContractor(node.employment)) contractors++;
+        else fte++;
+    }
+    const el = document.getElementById('headcount');
+    if (state.fteOnly) {
+        el.textContent = fte + ' FTE (of ' + total + ' total)';
+    } else {
+        el.textContent = total + ' people (' + fte + ' FTE, ' + contractors + ' contractors)';
+    }
+}
+
+init();
+</script>
+</body>
+</html>
