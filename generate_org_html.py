@@ -47,10 +47,13 @@ NICKNAME_MAP = {
 
 # Known people who appear as "Reports To" but not as "Name" rows — manual overrides
 KAMAL_REPORTS_TO = "jaimini"  # Kamal reports to Jaimini, not Jayesh
+KAMAL_FULL_NAME = "Kamalaksha Ghosh"
+KAMAL_TITLE = "VP Engineering"
 
 # Manual title overrides for people whose names differ between files
 MANUAL_TITLE_OVERRIDES = {
     "jagjit singh": "Director, Program Management",
+    "kamalaksha ghosh": "VP Engineering",
 }
 
 # QA Org hierarchy fix: automation contractors report to Ashish, not directly to Oleg.
@@ -716,6 +719,9 @@ def build_org_dataset(tab_name, nodes, title_map):
             if normalize_name(ph_node["name"]).startswith("kamal"):
                 jaimini = resolve_name_match("Jaimini", by_norm)
                 if jaimini:
+                    ph_node["name"] = KAMAL_FULL_NAME
+                    ph_node["title"] = KAMAL_TITLE
+                    ph_node["employment"] = "Full Time"
                     ph_node["managerId"] = jaimini["id"]
                     ph_node["dottedLine"] = KAMAL_DOTTED_LINE_TO
                     continue
@@ -907,40 +913,80 @@ def make_serializable(org_datasets, scrum_teams, missing_titles_map):
 
 
 def redact_data(data, all_names):
-    """Deep copy and replace all names with Person NNN."""
+    """Deep copy and replace all names with Person NNN + anonymize node IDs."""
     data = copy.deepcopy(data)
 
     # Build consistent name->redacted mapping
     name_to_redacted = {}
-    counter = [0]
+    name_counter = [0]
 
     def get_redacted(name):
         norm = normalize_name(name)
         if norm not in name_to_redacted:
-            counter[0] += 1
-            name_to_redacted[norm] = f"Person {counter[0]:03d}"
+            name_counter[0] += 1
+            name_to_redacted[norm] = f"Person {name_counter[0]:03d}"
         return name_to_redacted[norm]
 
-    # Redact org nodes
+    # Build consistent id->anonymized id mapping
+    id_map = {}
+    id_counter = [0]
+
+    def get_anon_id(old_id):
+        if old_id not in id_map:
+            id_counter[0] += 1
+            id_map[old_id] = f"node-{id_counter[0]:03d}"
+        return id_map[old_id]
+
+    # First pass: collect all node IDs to build the mapping
     for tab_name, org in data["orgs"].items():
+        get_anon_id(org["top"])
+        for nid in org["nodes"]:
+            get_anon_id(nid)
+        for parent_id, child_ids in org["children"].items():
+            get_anon_id(parent_id)
+            for cid in child_ids:
+                get_anon_id(cid)
+
+    # Redact org nodes: names, dottedLine, and IDs
+    for tab_name, org in data["orgs"].items():
+        # Remap top
+        org["top"] = get_anon_id(org["top"])
+
+        # Remap nodes dict
+        new_nodes = {}
         for nid, node in org["nodes"].items():
             node["name"] = get_redacted(node["name"])
             if node.get("dottedLine"):
                 node["dottedLine"] = get_redacted(node["dottedLine"])
+            new_id = get_anon_id(nid)
+            node["id"] = new_id
+            new_nodes[new_id] = node
+        org["nodes"] = new_nodes
 
-    # Redact scrum members
+        # Remap children dict
+        new_children = {}
+        for parent_id, child_ids in org["children"].items():
+            new_parent = get_anon_id(parent_id)
+            new_children[new_parent] = [get_anon_id(c) for c in child_ids]
+        org["children"] = new_children
+
+    # Redact scrum members: names and IDs
     for team_name, groups in data["scrum"].items():
         for discipline, members in groups.items():
             for m in members:
                 m["name"] = get_redacted(m["name"])
+                if "id" in m:
+                    m["id"] = get_anon_id(m["id"])
 
     # Redact missing titles lists
     for tab_name, names in data["missing"].items():
         data["missing"][tab_name] = [get_redacted(n) for n in names]
 
-    # Redact homeDrs
+    # Redact homeDrs: names and nodeIds
     for dr in data.get("homeDrs", []):
         dr["name"] = get_redacted(dr["name"])
+        if "nodeId" in dr:
+            dr["nodeId"] = get_anon_id(dr["nodeId"])
 
     return data
 
@@ -1374,6 +1420,31 @@ input[type="text"]::placeholder {
     color: rgba(255,255,255,0.7);
     white-space: nowrap;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header { flex-direction: column; align-items: flex-start; padding: 12px 16px; gap: 10px; }
+    .header h1 { font-size: 16px; }
+    .header-controls { width: 100%; gap: 8px; }
+    .header-controls select,
+    .header-controls input { font-size: 13px; min-width: 0; flex: 1; }
+    .breadcrumb { padding: 8px 16px; font-size: 12px; }
+    .main-content { padding: 16px; }
+    .manager-card { padding: 20px; }
+    .manager-card .name { font-size: 18px; }
+    .reports-grid { grid-template-columns: 1fr; gap: 12px; }
+    .person-card { padding: 14px; }
+    .person-card .name { font-size: 14px; }
+    .scrum-view { padding: 16px; }
+}
+
+@media (max-width: 480px) {
+    .header { padding: 10px 12px; }
+    .header h1 { font-size: 14px; }
+    .header-controls { flex-direction: column; }
+    .manager-card { padding: 16px; }
+    .reports-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -1464,19 +1535,19 @@ function goHome() {
 }
 
 function renderHome() {
-    // Get Jayesh's info from the first org dataset
+    // Get top person's info from the first org dataset
     const firstOrg = Object.values(DATA.orgs)[0];
-    const jayesh = firstOrg ? firstOrg.nodes[firstOrg.top] : null;
-    const jayeshName = jayesh ? jayesh.name : 'Leader';
-    const jayeshTitle = jayesh ? jayesh.title : '';
+    const topPerson = firstOrg ? firstOrg.nodes[firstOrg.top] : null;
+    const topName = topPerson ? topPerson.name : 'Leader';
+    const topTitle = topPerson ? topPerson.title : '';
 
     const bc = document.getElementById('breadcrumb');
-    bc.innerHTML = '<span class="current">' + escHtml(jayeshName) + (jayeshTitle ? ' — ' + escHtml(jayeshTitle) : '') + '</span>';
+    bc.innerHTML = '<span class="current">' + escHtml(topName) + (topTitle ? ' — ' + escHtml(topTitle) : '') + '</span>';
 
     let html = '<div class="manager-section">';
     html += '<div class="manager-card">';
-    html += '<div class="name">' + escHtml(jayeshName) + '</div>';
-    if (jayeshTitle) html += '<div class="title">' + escHtml(jayeshTitle) + '</div>';
+    html += '<div class="name">' + escHtml(topName) + '</div>';
+    if (topTitle) html += '<div class="title">' + escHtml(topTitle) + '</div>';
     html += '<span class="badge badge-fte">FTE</span>';
     html += '</div>';
     html += '<div class="connector"></div>';
