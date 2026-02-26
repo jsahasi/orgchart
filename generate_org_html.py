@@ -30,6 +30,8 @@ OUTPUT_FILE = Path(__file__).parent / "org_drilldown.html"
 REDACTED_FILE = Path(__file__).parent / "org_drilldown_redacted.html"
 
 ORG_TABS = ["Product-Design", "Full QA Org", "Full Dev Org", "TPM"]
+SALESFORCE_ORG_NAME = "Salesforce"
+SALESFORCE_DR_HINT = "Mahesh"  # Jayesh DR who heads the Salesforce org
 TALENT_TABS = ["Dev", "QA", "Salesforce", "Product Management", "Program Management"]
 
 JAYESH_NAME = "Jayesh Sahasi"
@@ -663,7 +665,7 @@ def build_org_dataset(tab_name, nodes, title_map):
                     "id": ph_id,
                     "name": rt,
                     "title": "",
-                    "employment": "",
+                    "employment": "Full Time",
                     "teamRaw": "",
                     "scrumTeams": [],
                     "reportsToRaw": "",
@@ -796,6 +798,70 @@ def build_org_dataset(tab_name, nodes, title_map):
     }
 
 
+def split_salesforce_org(org_datasets):
+    """Extract Mahesh Kheny's subtree from Full Dev Org into a separate Salesforce org."""
+    dev_key = "Full Dev Org"
+    sf_key = SALESFORCE_ORG_NAME
+
+    if dev_key not in org_datasets:
+        return org_datasets
+
+    dev = org_datasets[dev_key]
+    jayesh_id = dev["top"]
+
+    # Find Mahesh in Jayesh's children
+    mahesh_id = None
+    for cid in dev["children"].get(jayesh_id, []):
+        node = dev["nodes"].get(cid, {})
+        if SALESFORCE_DR_HINT.lower() in node.get("name", "").lower():
+            mahesh_id = cid
+            break
+
+    if not mahesh_id:
+        print(f"  [WARN] Could not find {SALESFORCE_DR_HINT} in {dev_key} for Salesforce split")
+        return org_datasets
+
+    # Collect Mahesh's entire subtree (BFS)
+    subtree_ids = set()
+    queue = [mahesh_id]
+    while queue:
+        current = queue.pop(0)
+        subtree_ids.add(current)
+        for child_id in dev["children"].get(current, []):
+            queue.append(child_id)
+
+    # Build Salesforce org: Jayesh at top, Mahesh as DR, plus subtree
+    sf_nodes = {jayesh_id: dev["nodes"][jayesh_id].copy()}
+    sf_nodes[jayesh_id]["org"] = sf_key
+    sf_children = {jayesh_id: [mahesh_id]}
+
+    for nid in subtree_ids:
+        sf_nodes[nid] = dev["nodes"][nid].copy()
+        sf_nodes[nid]["org"] = sf_key
+        if nid in dev["children"]:
+            sf_children[nid] = list(dev["children"][nid])
+
+    org_datasets[sf_key] = {
+        "top": jayesh_id,
+        "nodes": sf_nodes,
+        "children": sf_children,
+    }
+
+    # Remove subtree from Dev org
+    for nid in subtree_ids:
+        if nid in dev["nodes"]:
+            del dev["nodes"][nid]
+        if nid in dev["children"]:
+            del dev["children"][nid]
+
+    # Remove Mahesh from Jayesh's children in Dev
+    if jayesh_id in dev["children"]:
+        dev["children"][jayesh_id] = [c for c in dev["children"][jayesh_id] if c != mahesh_id]
+
+    print(f"  Split Salesforce org: {len(sf_nodes)} nodes (Mahesh + {len(subtree_ids)-1} reports)")
+    return org_datasets
+
+
 # ─── Step 4: Build Scrum Index ───────────────────────────────────────────────
 
 def build_scrum_index(org_datasets):
@@ -834,10 +900,12 @@ def build_scrum_index(org_datasets):
     # Determine discipline and pick leads
     scrum_teams = {}
     for team_name, members in scrum_index.items():
-        grouped = {"Dev": [], "QA": [], "Product": [], "TPM": [], "Other": []}
+        grouped = {"Dev": [], "QA": [], "Product": [], "TPM": [], "Salesforce": [], "Other": []}
         for m in members:
             org = m["org"]
-            if "Dev" in org:
+            if org == SALESFORCE_ORG_NAME:
+                grouped["Salesforce"].append(m)
+            elif "Dev" in org:
                 grouped["Dev"].append(m)
             elif "QA" in org:
                 grouped["QA"].append(m)
@@ -1919,6 +1987,9 @@ def main():
             c = dataset["nodes"][cid]
             print(f"      - {c['name']} ({c.get('title', 'no title')})")
 
+    # Step 3b: Split Salesforce into separate org
+    org_datasets = split_salesforce_org(org_datasets)
+
     # Step 4: Build scrum index
     print("\n[4] Building scrum team index...")
     scrum_teams = build_scrum_index(org_datasets)
@@ -1963,7 +2034,7 @@ def main():
     print("\n" + "=" * 60)
     print("Summary")
     print("=" * 60)
-    for tab_name in ORG_TABS:
+    for tab_name in list(ORG_TABS) + [SALESFORCE_ORG_NAME]:
         if tab_name in org_datasets:
             ds = org_datasets[tab_name]
             total = len(ds["nodes"])
