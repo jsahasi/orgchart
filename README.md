@@ -30,14 +30,15 @@ Place Excel files in the `data/` folder:
 
 ## Features
 
-- **Home view**: Landing page showing Jayesh + all 5 direct reports across orgs
+- **Home view**: Landing page showing Jayesh + all 5 direct reports across 5 orgs
 - **Hierarchical drilldown**: Click any person to see their direct reports
-- **Org switching**: Dropdown to switch between Product-Design, QA, Dev, TPM
+- **Org switching**: Dropdown for Product-Design, QA, Dev, Salesforce, TPM
 - **FTE-only toggle**: Hide contractors across all views
 - **Scrum team view**: Click team pills to see team composition with lead identification
 - **Search**: Find people by name across all orgs
 - **Breadcrumb navigation**: Always know where you are, navigate up easily
-- **Dotted-line indicators**: Shows secondary reporting relationships (e.g., Kamal → Jayesh)
+- **Dotted-line indicators**: Shows secondary reporting (e.g., Kamalaksha Ghosh → Jayesh)
+- **Responsive layout**: Works on desktop, tablet, and mobile
 
 ## Org Structure
 
@@ -52,10 +53,12 @@ Jayesh Sahasi (EVP Product & CTO)
 │   ├── Jenny Wai Li
 │   └── Shefali Singh
 ├── Jaimini Joshi (Dev)
-│   ├── Kamal (dotted-line to Jayesh), Alberto, Shishir, Angel, ...
+│   ├── Kamalaksha Ghosh (dotted-line to Jayesh), Alberto, Shishir, Angel, ...
 │   └── (Full Dev Org)
 ├── Mahesh Kheny (Salesforce)
+│   └── Homer Santos → James Gomez, Raj Kommera
 └── Jagjit Singh (TPM)
+    └── Kashan Babar, Ishwinder Walia, C-Bhagyashree More
 ```
 
 ## Scrum Teams (20)
@@ -64,4 +67,4 @@ Analytics, Appgen, Automation, Cloud Engineering, Console, EER, EHub/Target, Eli
 
 ## Redacted Version
 
-The redacted HTML replaces every person's name with `Person NNN`. No real names appear anywhere in the HTML source — verified by automated scan. Structure, titles, team names, and employment status are preserved.
+The redacted HTML replaces every person's name with `Person NNN` and every node ID with `node-NNN`. No real names appear anywhere in the HTML source — not in data, IDs, variables, or comments. Verified by automated scan on every generation. Structure, titles, team names, and employment status are preserved.

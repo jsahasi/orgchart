@@ -1,7 +1,7 @@
 # Org Chart Project
 
 ## Overview
-Interactive org chart generator for Jayesh Sahasi's multi-org structure (Product-Design, QA, Dev, TPM). Reads Excel workbooks and produces two standalone HTML files with drilldown navigation.
+Interactive org chart generator for Jayesh Sahasi's multi-org structure. Reads Excel workbooks and produces two standalone HTML files with drilldown navigation.
 
 ## Project Structure
 ```
@@ -21,36 +21,35 @@ python generate_org_html.py
 ```
 Requires: Python 3.8+, openpyxl (auto-installed if missing)
 
+## 5 Orgs (from dropdown)
+| Org | Jayesh DR | Source Tab |
+|-----|-----------|-----------|
+| Product-Design | Steve Sims | Product-Design |
+| Full QA Org | Oleg Massakovskyy | Full QA Org |
+| Full Dev Org | Jaimini Joshi | Full Dev Org |
+| Salesforce | Mahesh Kheny | Full Dev Org (split out at runtime) |
+| TPM | Jagjit Singh | TPM |
+
+Salesforce is synthesized by extracting Mahesh's subtree from Full Dev Org via `split_salesforce_org()`.
+
 ## Business Rules
 
-### Rule 1: Home View
-Home page shows Jayesh Sahasi (EVP Product & CTO) with all 5 direct reports from across all orgs, each linking to their respective org drilldown.
+### Home View
+Home page shows Jayesh Sahasi (EVP Product & CTO) with all 5 direct reports across 5 orgs.
 
-### Rule 2: Jayesh DRs (Cross-Org)
-- Steve Sims → Product-Design
-- Oleg Massakovskyy → Full QA Org
-- Jaimini Joshi → Full Dev Org
-- Mahesh Kheny → Full Dev Org (Salesforce)
-- Jagjit Singh → TPM
+### Kamalaksha Ghosh
+Full name: Kamalaksha Ghosh, VP Engineering. Appears as "Kamal" in "Reports To" column only (no Name row). Reports to Jaimini with dotted-line to Jayesh.
 
-### Rule 3: Kamal Reports to Jaimini
-Kamal appears as "Reports To" only (no Name row). Routes to Jaimini with dotted-line annotation to Jayesh.
+### QA Hierarchy
+Automation contractors report to Ashish Oza (contractor) → Oleg. Oleg's real DRs: Rumana, Shefali, Jenny, Ashish.
 
-### Rule 4: Hide Unassigned Bucket
-No "Unassigned" placeholder in any org view.
-
-### Rule 5: QA Hierarchy
-Automation contractors report to Ashish Oza → Oleg. Oleg's real DRs: Rumana, Shefali, Jenny, Ashish.
-
-### Rule 6: Canonical Scrum Team Names (20 teams)
+### Canonical Scrum Team Names (20 teams)
 Source: `JayeshSahasi_SCRUMS.xlsx` "Team Reorg" tab. Aliases mapped via `TEAM_ALIASES`:
-- Integration → Integrations
-- GoLive → Go Live
-- Video → Vids
+- Integration → Integrations, GoLive → Go Live, Video → Vids
 - Segmentation → dropped entirely (not staffed)
 - Console, Forums, Vids listed as separate teams
 
-### Rule 7: Default Titles by Org
+### Default Titles by Org
 | Org | Default Title |
 |-----|---------------|
 | Full Dev Org | Senior Software Engineer |
@@ -58,9 +57,12 @@ Source: `JayeshSahasi_SCRUMS.xlsx` "Team Reorg" tab. Aliases mapped via `TEAM_AL
 | Product-Design | Senior UX Designer |
 | TPM | Scrum Master |
 
-Per-person overrides: Sanel Selimovic → Senior UX Designer, Jagjit Singh → Director, Program Management
+Per-person overrides: Sanel Selimovic → Senior UX Designer, Jagjit Singh → Director, Program Management, Kamalaksha Ghosh → VP Engineering
 
-### Rule 8: Changelog Row Filtering
+### Placeholder Nodes
+People who appear only in "Reports To" (not as Name rows) become placeholder nodes. All default to employment = "Full Time".
+
+### Changelog Row Filtering
 Skip rows at bottom of sheets that are audit/changelog entries (dates, "Updated", "Notes", etc.) via `CHANGELOG_SKIP_NAMES`.
 
 ## Data Parsing Conventions
@@ -70,16 +72,19 @@ Skip rows at bottom of sheets that are audit/changelog entries (dates, "Updated"
 - **Name matching**: Fuzzy via `NICKNAME_MAP` (Steve→Stephen, Dan→Daniel), partial first-name match, last-name match
 
 ## Redacted Version
-- All names replaced with "Person NNN" (sequential, consistent)
+- All names → "Person NNN" (sequential, consistent)
+- All node IDs → "node-NNN" (no name fragments in keys)
 - `dottedLine` field also redacted
-- No real names anywhere in HTML source (verified by automated scan)
-- Titles, teams, hierarchy preserved
+- No real names anywhere in HTML source — data, IDs, JS variables, comments all clean
+- Verified by automated scan on every generation
 
 ## HTML Template
-Uses raw string template `r'''...'''` with `__TITLE_SUFFIX__` and `__DATA_JSON__` placeholders (not f-strings — avoids JS quote escaping issues).
+Uses raw string template `r'''...'''` with `__TITLE_SUFFIX__` and `__DATA_JSON__` placeholders (not f-strings — avoids JS quote escaping issues). Includes responsive CSS (`@media` breakpoints at 768px and 480px).
 
-## Key Config Constants in generate_org_html.py
+## Key Config Constants
 - `JAYESH_DRS` — list of DR name hints
+- `SALESFORCE_ORG_NAME` / `SALESFORCE_DR_HINT` — Salesforce org split config
+- `KAMAL_FULL_NAME` / `KAMAL_TITLE` — Kamalaksha Ghosh identity
 - `NICKNAME_MAP` — first-name aliases
 - `MANUAL_TITLE_OVERRIDES` / `MANUAL_TITLE_OVERRIDES_EXTRA` — per-person title fixes
 - `TEAM_ALIASES` — raw team → canonical name mapping (~70 entries)
