@@ -25,7 +25,7 @@ Place Excel files in the `data/` folder:
 | File | Purpose |
 |------|---------|
 | `JayeshSahasi_ON24 QA-Dev Org List.xlsx` | Org roster with hierarchy, teams, employment |
-| `JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx` | Job titles enrichment |
+| `JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx` | Job titles, Talent Band, Category, Rationale |
 | `JayeshSahasi_SCRUMS.xlsx` | Canonical scrum team names |
 
 ## Features
@@ -39,6 +39,7 @@ Place Excel files in the `data/` folder:
 - **Search**: Find people by name across all orgs
 - **Breadcrumb navigation**: Always know where you are, navigate up easily
 - **Dotted-line indicators**: Shows secondary reporting (e.g., Kamalaksha Ghosh → Jayesh)
+- **Talent info tooltip**: Hover "i" icon next to names to see Talent Band, Category, and Rationale (from talent snapshot)
 - **Responsive layout**: Works on desktop, tablet, and mobile
 
 ## Org Structure
@@ -68,4 +69,4 @@ Analytics, Appgen, Automation, Cloud Engineering, Console, EER, EHub/Target, Eli
 
 ## Redacted Version
 
-The redacted HTML replaces every person's name with a blacked-out format: initials are visible, remaining letters are replaced with block characters (e.g., "J████ S█████"). Node IDs are anonymized to `node-NNN`. No real names appear anywhere in the HTML source — not in data, IDs, variables, or comments. Not discoverable via view-source. Verified by automated scan on every generation. Structure, titles, team names, and employment status are preserved.
+The redacted HTML replaces every person's name with a blacked-out format: initials are visible, remaining letters are replaced with block characters (e.g., "J████ S█████"). Node IDs are anonymized to `node-NNN`. No real names appear anywhere in the HTML source — not in data, IDs, variables, or comments. Rationale text has real names scrubbed. Not discoverable via view-source. Verified by automated scan on every generation. Structure, titles, talent data, team names, and employment status are preserved.

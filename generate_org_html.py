@@ -537,7 +537,7 @@ def parse_teams_hierarchy(filepath):
 # ─── Step 1: Parse Talent Snapshot ───────────────────────────────────────────
 
 def parse_talent_snapshot(filepath):
-    """Build title_map: normalize_name -> title."""
+    """Build title_map: normalize_name -> {title, talentBand, talentCategory, rationale}."""
     wb = openpyxl.load_workbook(filepath, read_only=True, data_only=True)
     title_map = {}
 
@@ -557,6 +557,9 @@ def parse_talent_snapshot(filepath):
         first_name_idx = None
         last_name_idx = None
         title_idx = None
+        band_idx = None
+        category_idx = None
+        rationale_idx = None
         for i, h in enumerate(header):
             hl = h.lower()
             if hl == "first name":
@@ -565,13 +568,20 @@ def parse_talent_snapshot(filepath):
                 last_name_idx = i
             elif hl == "title":
                 title_idx = i
+            elif "talent band" in hl:
+                band_idx = i
+            elif "talent category" in hl:
+                category_idx = i
+            elif "rationale" in hl:
+                rationale_idx = i
 
         if first_name_idx is None or last_name_idx is None or title_idx is None:
             print(f"  [WARN] Talent tab '{tab_name}' missing required columns, skipping")
             continue
 
+        max_needed = max(first_name_idx, last_name_idx, title_idx)
         for row in rows[1:]:
-            if len(row) <= max(first_name_idx, last_name_idx, title_idx):
+            if len(row) <= max_needed:
                 continue
             first = str(row[first_name_idx]).strip() if row[first_name_idx] else ""
             last = str(row[last_name_idx]).strip() if row[last_name_idx] else ""
@@ -585,10 +595,26 @@ def parse_talent_snapshot(filepath):
             if key and title:
                 # Clean up title
                 title = re.sub(r'\s+', ' ', title).strip()
-                title_map[key] = title
+
+                band = ""
+                if band_idx is not None and len(row) > band_idx and row[band_idx]:
+                    band = str(row[band_idx]).strip()
+                category = ""
+                if category_idx is not None and len(row) > category_idx and row[category_idx]:
+                    category = str(row[category_idx]).strip()
+                rationale = ""
+                if rationale_idx is not None and len(row) > rationale_idx and row[rationale_idx]:
+                    rationale = re.sub(r'\s+', ' ', str(row[rationale_idx]).strip())
+
+                title_map[key] = {
+                    "title": title,
+                    "talentBand": band,
+                    "talentCategory": category,
+                    "rationale": rationale,
+                }
 
     wb.close()
-    print(f"  Talent snapshot: {len(title_map)} titles loaded")
+    print(f"  Talent snapshot: {len(title_map)} entries loaded")
     return title_map
 
 
@@ -694,7 +720,7 @@ def parse_org_tab(ws, tab_name):
 
 
 def fuzzy_title_match(name, title_map):
-    """Try fuzzy matching for title lookup."""
+    """Try fuzzy matching for title lookup. Returns matched key or None."""
     norm = normalize_name(name)
     parts = norm.split()
     if len(parts) < 2:
@@ -706,7 +732,7 @@ def fuzzy_title_match(name, title_map):
     # Try nickname
     first_alt = NICKNAME_MAP.get(first, first)
 
-    for key, title in title_map.items():
+    for key in title_map:
         key_parts = key.split()
         if len(key_parts) < 2:
             continue
@@ -716,13 +742,13 @@ def fuzzy_title_match(name, title_map):
         # Same last name + first name starts with or vice versa
         if k_last == last:
             if k_first.startswith(first) or first.startswith(k_first):
-                return title
+                return key
             if k_first.startswith(first_alt) or first_alt.startswith(k_first):
-                return title
+                return key
 
         # Reversed name
         if k_first == last and k_last == first:
-            return title
+            return key
 
     return None
 
@@ -903,6 +929,18 @@ def build_from_on24(on24_people, org_tab_people, teams_hier, title_map):
             all_nodes[node_id]["managerId"] = jayesh_id
             children[jayesh_id].append(node_id)
 
+    # ── Phase 2b: Enrich on24 nodes with talent snapshot data ──
+    for norm, node_id in norm_to_id.items():
+        talent = title_map.get(norm)
+        if not talent:
+            matched_key = fuzzy_title_match(norm, title_map)
+            if matched_key:
+                talent = title_map[matched_key]
+        if talent:
+            all_nodes[node_id]["talentBand"] = talent.get("talentBand", "")
+            all_nodes[node_id]["talentCategory"] = talent.get("talentCategory", "")
+            all_nodes[node_id]["rationale"] = talent.get("rationale", "")
+
     # ── Phase 3: Add people from per-org tabs not already in on24 ──
     slug_counter = defaultdict(int)
     on24_norms = set(norm_to_id.keys())
@@ -930,19 +968,26 @@ def build_from_on24(on24_people, org_tab_people, teams_hier, title_map):
 
         # Resolve title: manual overrides > talent snapshot > fuzzy > org default
         title = ""
+        talent_key = None  # track which title_map key matched
         if norm in MANUAL_TITLE_OVERRIDES:
             title = MANUAL_TITLE_OVERRIDES[norm]
+            talent_key = norm if norm in title_map else None
         elif norm in MANUAL_TITLE_OVERRIDES_EXTRA:
             title = MANUAL_TITLE_OVERRIDES_EXTRA[norm]
+            talent_key = norm if norm in title_map else None
         elif norm in title_map:
-            title = title_map[norm]
+            title = title_map[norm]["title"]
+            talent_key = norm
         else:
-            t = fuzzy_title_match(name, title_map)
-            if t:
-                title = t
+            matched_key = fuzzy_title_match(name, title_map)
+            if matched_key:
+                title = title_map[matched_key]["title"]
+                talent_key = matched_key
             else:
                 title = DEFAULT_TITLES_BY_ORG.get(info.get("org_tab", ""), "")
 
+        # Attach talent snapshot fields
+        talent_info = title_map.get(talent_key) if talent_key else None
         node = {
             "id": node_id,
             "name": name,
@@ -953,6 +998,9 @@ def build_from_on24(on24_people, org_tab_people, teams_hier, title_map):
             "managerId": None,
             "placeholder": False,
             "org": "",
+            "talentBand": talent_info["talentBand"] if talent_info else "",
+            "talentCategory": talent_info["talentCategory"] if talent_info else "",
+            "rationale": talent_info["rationale"] if talent_info else "",
         }
 
         # Resolve manager: try team lead from Teams Hierarchy, then per-org Reports To
@@ -1212,6 +1260,9 @@ def build_scrum_index(org_datasets, teams_hier=None):
                     "title": node.get("title", ""),
                     "employment": node.get("employment", ""),
                     "isLead": is_lead,
+                    "talentBand": node.get("talentBand", ""),
+                    "talentCategory": node.get("talentCategory", ""),
+                    "rationale": node.get("rationale", ""),
                 })
 
     # Build canonical scrum_index
@@ -1277,6 +1328,9 @@ def make_serializable(org_datasets, scrum_teams):
                 "scrumTeams": node.get("scrumTeams", []),
                 "placeholder": node.get("placeholder", False),
                 "org": node.get("org", tab_name),
+                "talentBand": node.get("talentBand", ""),
+                "talentCategory": node.get("talentCategory", ""),
+                "rationale": node.get("rationale", ""),
             }
             if node.get("dottedLine"):
                 ser["dottedLine"] = node["dottedLine"]
@@ -1301,6 +1355,9 @@ def make_serializable(org_datasets, scrum_teams):
                         "employment": c.get("employment", ""),
                         "org": tab_name,
                         "nodeId": cid,
+                        "talentBand": c.get("talentBand", ""),
+                        "talentCategory": c.get("talentCategory", ""),
+                        "rationale": c.get("rationale", ""),
                     })
 
     return {
@@ -1356,7 +1413,31 @@ def redact_data(data, all_names):
             for cid in child_ids:
                 get_anon_id(cid)
 
-    # Redact org nodes: names, dottedLine, and IDs
+    # Build sorted names list (longest first) for rationale scrubbing
+    sorted_names = sorted(all_names, key=len, reverse=True)
+
+    def redact_rationale(text):
+        """Replace any real names found in rationale text with redacted versions."""
+        if not text:
+            return text
+        result = text
+        for real_name in sorted_names:
+            if len(real_name) < 4:
+                continue
+            # Case-insensitive replacement of full names
+            pattern = re.compile(re.escape(real_name), re.IGNORECASE)
+            if pattern.search(result):
+                result = pattern.sub(get_redacted(real_name), result)
+            # Also try first names only (>= 4 chars) for partial matches
+            parts = real_name.split()
+            for part in parts:
+                if len(part) >= 4:
+                    part_pattern = re.compile(r'\b' + re.escape(part) + r'\b', re.IGNORECASE)
+                    if part_pattern.search(result):
+                        result = part_pattern.sub(get_redacted(part), result)
+        return result
+
+    # Redact org nodes: names, dottedLine, rationale, and IDs
     for tab_name, org in data["orgs"].items():
         # Remap top
         org["top"] = get_anon_id(org["top"])
@@ -1367,6 +1448,8 @@ def redact_data(data, all_names):
             node["name"] = get_redacted(node["name"])
             if node.get("dottedLine"):
                 node["dottedLine"] = get_redacted(node["dottedLine"])
+            if node.get("rationale"):
+                node["rationale"] = redact_rationale(node["rationale"])
             new_id = get_anon_id(nid)
             node["id"] = new_id
             new_nodes[new_id] = node
@@ -1379,23 +1462,27 @@ def redact_data(data, all_names):
             new_children[new_parent] = [get_anon_id(c) for c in child_ids]
         org["children"] = new_children
 
-    # Redact scrum members: names and IDs
+    # Redact scrum members: names, IDs, and rationale
     for team_name, groups in data["scrum"].items():
         for discipline, members in groups.items():
             for m in members:
                 m["name"] = get_redacted(m["name"])
                 if "id" in m:
                     m["id"] = get_anon_id(m["id"])
+                if m.get("rationale"):
+                    m["rationale"] = redact_rationale(m["rationale"])
 
     # Redact missing titles lists
     for tab_name, names in data["missing"].items():
         data["missing"][tab_name] = [get_redacted(n) for n in names]
 
-    # Redact homeDrs: names and nodeIds
+    # Redact homeDrs: names, nodeIds, and rationale
     for dr in data.get("homeDrs", []):
         dr["name"] = get_redacted(dr["name"])
         if "nodeId" in dr:
             dr["nodeId"] = get_anon_id(dr["nodeId"])
+        if dr.get("rationale"):
+            dr["rationale"] = redact_rationale(dr["rationale"])
 
     return data
 
@@ -1873,6 +1960,16 @@ input[type="text"]::placeholder {
     white-space: nowrap;
 }
 
+/* Talent info tooltip */
+.talent-info { display: inline-block; position: relative; cursor: pointer; margin-left: 6px; vertical-align: middle; }
+.talent-info .info-icon { width: 16px; height: 16px; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: 11px; font-weight: 700; text-align: center; line-height: 16px; font-style: italic; display: inline-block; }
+.talent-info .info-icon:hover { background: #3b82f6; color: #fff; }
+.talent-info .talent-tip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1e293b; color: #f1f5f9; padding: 12px 16px; border-radius: 8px; font-size: 12px; line-height: 1.5; width: 300px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); pointer-events: none; }
+.talent-info:hover .talent-tip { display: block; }
+.talent-tip .tip-label { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.talent-tip .tip-value { margin-bottom: 8px; }
+.talent-tip .tip-value:last-child { margin-bottom: 0; }
+
 /* Responsive */
 @media (max-width: 768px) {
     .header { flex-direction: column; align-items: flex-start; padding: 12px 16px; gap: 10px; }
@@ -1970,6 +2067,18 @@ function escHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function talentTooltip(node) {
+    if (!node.talentBand && !node.talentCategory && !node.rationale) return '';
+    var html = '<span class="talent-info">';
+    html += '<span class="info-icon">i</span>';
+    html += '<span class="talent-tip">';
+    if (node.talentBand) html += '<div class="tip-label">Band</div><div class="tip-value">' + escHtml(node.talentBand) + '</div>';
+    if (node.talentCategory) html += '<div class="tip-label">Category</div><div class="tip-value">' + escHtml(node.talentCategory) + '</div>';
+    if (node.rationale) html += '<div class="tip-label">Rationale</div><div class="tip-value">' + escHtml(node.rationale) + '</div>';
+    html += '</span></span>';
+    return html;
+}
+
 // ── Init ──
 function init() {
     const sel = document.getElementById('orgSelect');
@@ -2019,7 +2128,7 @@ function renderHome() {
 
     let html = '<div class="manager-section">';
     html += '<div class="manager-card">';
-    html += '<div class="name">' + escHtml(displayName(topName)) + '</div>';
+    html += '<div class="name">' + escHtml(displayName(topName)) + (topPerson ? talentTooltip(topPerson) : '') + '</div>';
     if (topTitle) html += '<div class="title">' + escHtml(topTitle) + '</div>';
     html += '<span class="badge badge-fte">FTE</span>';
     html += '</div>';
@@ -2034,7 +2143,7 @@ function renderHome() {
             ? '<span class="badge badge-contractor">Contractor</span>'
             : '<span class="badge badge-fte">FTE</span>';
         html += '<div class="person-card" onclick="switchToOrgDr(\'' + escHtml(dr.org) + '\',\'' + escHtml(dr.nodeId) + '\')">';
-        html += '<div class="name">' + escHtml(displayName(dr.name)) + '</div>';
+        html += '<div class="name">' + escHtml(displayName(dr.name)) + talentTooltip(dr) + '</div>';
         if (dr.title) html += '<div class="title">' + escHtml(dr.title) + '</div>';
         html += badge;
         html += '<div class="dr-count" style="color:#3182ce">' + escHtml(dr.org) + '</div>';
@@ -2217,6 +2326,7 @@ function renderScrum(teamName) {
                 : '<span class="badge badge-fte">FTE</span>';
             html += '<div class="scrum-member' + (isLead ? ' is-lead' : '') + '">';
             html += '<a onclick="navigateToOrgCard(\'' + escHtml(m.org) + "','" + escHtml(m.id) + '\')">' + escHtml(displayName(m.name)) + leadLabel + '</a>';
+            html += talentTooltip(m);
             html += ' ' + badge;
             if (m.title) html += ' <span class="member-title">' + escHtml(m.title) + '</span>';
             html += '</div>';
@@ -2268,6 +2378,9 @@ function collectListRows() {
                 scrumTeams: node.scrumTeams || [],
                 nodeId: nid,
                 orgKey: orgName,
+                talentBand: node.talentBand || '',
+                talentCategory: node.talentCategory || '',
+                rationale: node.rationale || '',
             });
         }
     });
@@ -2314,7 +2427,7 @@ function renderListTable(rows) {
     html += '</tr></thead><tbody>';
     rows.forEach(function(r) {
         html += '<tr>';
-        html += '<td><a onclick="navigateToOrgCard(\'' + escHtml(r.orgKey) + "','" + escHtml(r.nodeId) + '\')">' + escHtml(displayName(r.name)) + '</a></td>';
+        html += '<td><a onclick="navigateToOrgCard(\'' + escHtml(r.orgKey) + "','" + escHtml(r.nodeId) + '\')">' + escHtml(displayName(r.name)) + '</a>' + talentTooltip(r) + '</td>';
         html += '<td>' + escHtml(r.title) + '</td>';
         var badgeCls = r.type === 'Contractor' ? 'badge-contractor' : 'badge-fte';
         html += '<td><span class="badge ' + badgeCls + '">' + r.type + '</span></td>';
@@ -2408,7 +2521,7 @@ function render() {
 
     let html = '<div class="manager-section">';
     html += '<div class="manager-card">';
-    html += '<div class="name">' + escHtml(displayName(node.name)) + '</div>';
+    html += '<div class="name">' + escHtml(displayName(node.name)) + talentTooltip(node) + '</div>';
     if (node.title) html += '<div class="title">' + escHtml(node.title) + '</div>';
     html += empBadge;
     html += teamPills;
@@ -2446,7 +2559,7 @@ function render() {
 
             const phClass = child.placeholder ? ' placeholder' : '';
             html += '<div class="person-card' + phClass + '" onclick="navigateTo(\'' + escHtml(child.id) + '\')">';
-            html += '<div class="name">' + escHtml(displayName(child.name)) + '</div>';
+            html += '<div class="name">' + escHtml(displayName(child.name)) + talentTooltip(child) + '</div>';
             if (child.title) html += '<div class="title">' + escHtml(child.title) + '</div>';
             html += cBadge;
             if (child.dottedLine) html += '<div class="dr-count" style="color:#805ad5;font-style:italic">Dotted-line: ' + escHtml(displayName(child.dottedLine)) + '</div>';

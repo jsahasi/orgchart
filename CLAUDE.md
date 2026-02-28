@@ -29,7 +29,7 @@ Requires: Python 3.8+, openpyxl (auto-installed if missing)
 | `data/on24.xlsx` (on24 sheet) | **Definitive hierarchy** — 410 rows, full company | "Last, First" names |
 | `data/JayeshSahasi_QA-Dev Org List.xlsx` (per-org tabs) | Employment status, scrum team assignments, contractor roster | "First Last" names |
 | `data/JayeshSahasi_SCRUMS.xlsx` (Teams Hierachy sheet) | Team → Dev Lead, QA Lead, Director mappings | First names / short names |
-| `data/JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx` | Supplementary title enrichment (75 people) | "First Last" |
+| `data/JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx` | Titles + Talent Band/Category/Rationale (75 people) | "First Last" |
 
 ## 5 Orgs (from dropdown)
 | Org | Jayesh DR | Source |
@@ -94,6 +94,7 @@ Skip rows at bottom of sheets that are audit/changelog entries via `CHANGELOG_SK
 - **Org drilldown**: Hierarchical card view with drill-in navigation
 - **Scrum team view**: Team composition grouped by discipline, with lead identification
 - **List view**: Flat sortable table of all people (Name, Title, Type, Manager, Org, Scrum Teams). Clickable names navigate to org cards; clickable scrum team pills navigate to scrum view. Headcount deduplicated across orgs in Home list view.
+- **Talent info tooltip**: "i" icon next to names of people who have talent snapshot data. Hover shows Talent Band, Talent Category, and Rationale. Present in all views (home, org drilldown, scrum, list). Rationale text in redacted version has names scrubbed.
 
 ## Redacted Version
 - All names → "J████ S█████" format (initial visible, remaining letters blacked out with U+2588)
@@ -101,6 +102,7 @@ Skip rows at bottom of sheets that are audit/changelog entries via `CHANGELOG_SK
 - No real names anywhere in HTML source — data, IDs, JS variables, comments all clean
 - Not discoverable via view-source; real names never embedded in output
 - In-browser Redact toggle (named file only) uses same blacked-out format via `displayName()`
+- Rationale text has real names scrubbed (longest-first, case-insensitive replacement)
 - Verified by automated scan on every generation
 
 ## HTML Template
