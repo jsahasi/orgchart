@@ -33,8 +33,9 @@ Place Excel files in the `data/` folder:
 - **Home view**: Landing page showing Jayesh + all 5 direct reports across 5 orgs
 - **Hierarchical drilldown**: Click any person to see their direct reports
 - **Org switching**: Dropdown for Product-Design, QA, Dev, Salesforce, TPM
-- **FTE-only toggle**: Hide contractors across all views
+- **FTE/Contractor toggles**: Show/hide employees or contractors across all views
 - **Scrum team view**: Click team pills to see team composition with lead identification
+- **List view**: Flat sortable table of all people — sort by name, title, type, manager, or org. Clickable scrum team pills.
 - **Search**: Find people by name across all orgs
 - **Breadcrumb navigation**: Always know where you are, navigate up easily
 - **Dotted-line indicators**: Shows secondary reporting (e.g., Kamalaksha Ghosh → Jayesh)
@@ -67,4 +68,4 @@ Analytics, Appgen, Automation, Cloud Engineering, Console, EER, EHub/Target, Eli
 
 ## Redacted Version
 
-The redacted HTML replaces every person's name with `Person NNN` and every node ID with `node-NNN`. No real names appear anywhere in the HTML source — not in data, IDs, variables, or comments. Verified by automated scan on every generation. Structure, titles, team names, and employment status are preserved.
+The redacted HTML replaces every person's name with a blacked-out format: initials are visible, remaining letters are replaced with block characters (e.g., "J████ S█████"). Node IDs are anonymized to `node-NNN`. No real names appear anywhere in the HTML source — not in data, IDs, variables, or comments. Not discoverable via view-source. Verified by automated scan on every generation. Structure, titles, team names, and employment status are preserved.
