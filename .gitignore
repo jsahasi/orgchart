@@ -4,3 +4,12 @@ __pycache__/
 Thumbs.db
 *.tmp
 ~$*
+.streamlit/secrets.toml
+.claude/
+backup/
+b64chunk*.txt
+decode_script.py
+write_script.py
+write_verify.py
+test*.py
+data/-.xlsx

@@ -1,72 +1,75 @@
-# Org Chart Generator
+# Org Chart
 
-Generates interactive, standalone HTML org charts from Excel workbooks. Produces two files:
+Interactive org chart viewer for a multi-org engineering structure. Reads a master Excel workbook and produces standalone HTML files with drilldown navigation, scrum team views, and talent data.
 
-1. **`org_drilldown.html`** — Full org chart with names
-2. **`org_drilldown_redacted.html`** — Same chart with all names anonymized
+Deployed on [Streamlit Community Cloud](https://share.streamlit.io) as a password-protected web app.
 
 ## Quick Start
 
+### Generate HTML locally
 ```bash
+pip install openpyxl
 python generate_org_html.py
 ```
+Produces `org_drilldown.html` (named) and `org_drilldown_redacted.html` (redacted). Open either in any browser — fully self-contained.
 
-Opens `org_drilldown.html` in any browser. No server needed — fully self-contained.
+### Run the Streamlit app locally
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+Password: configured in `.streamlit/secrets.toml`
 
-## Requirements
+## Deployment (Streamlit Community Cloud)
 
-- Python 3.8+
-- openpyxl (auto-installed on first run)
-
-## Input Data
-
-Place Excel files in the `data/` folder:
-
-| File | Purpose |
-|------|---------|
-| `JayeshSahasi_ON24 QA-Dev Org List.xlsx` | Org roster with hierarchy, teams, employment |
-| `JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx` | Job titles, Talent Band, Category, Rationale |
-| `JayeshSahasi_SCRUMS.xlsx` | Canonical scrum team names |
+1. Push this repo to GitHub (private recommended)
+2. Go to [share.streamlit.io](https://share.streamlit.io) and connect the repo
+3. Set **Main file path** to `streamlit_app.py`
+4. In **Advanced settings > Secrets**, add:
+   ```toml
+   app_password = "your-password"
+   github_token = "ghp_your_token"
+   github_repo = "owner/orgchart"
+   ```
+5. Monthly auto-regeneration runs via GitHub Actions (1st of each month)
 
 ## Features
 
-- **Home view**: Landing page showing Jayesh + all 5 direct reports across 5 orgs
-- **Hierarchical drilldown**: Click any person to see their direct reports
-- **Org switching**: Dropdown for Product-Design, QA, Dev, Salesforce, TPM
-- **FTE/Contractor toggles**: Show/hide employees or contractors across all views
-- **Scrum team view**: Click team pills to see team composition with lead identification
-- **List view**: Flat sortable table of all people — sort by name, title, type, manager, or org. Clickable scrum team pills.
-- **Search**: Find people by name across all orgs
-- **Breadcrumb navigation**: Always know where you are, navigate up easily
-- **Dotted-line indicators**: Shows secondary reporting (e.g., Kamalaksha Ghosh → Jayesh)
-- **Talent info tooltip**: Hover "i" icon next to names to see Talent Band, Category, and Rationale (from talent snapshot)
-- **Responsive layout**: Works on desktop, tablet, and mobile
+- **Org drilldown** — hierarchical card view with drill-in navigation across 5 orgs
+- **Scrum team view** — team composition grouped by discipline with lead identification
+- **List view** — flat sortable table with clickable navigation
+- **FTE/Contractor toggles** — show/hide employees or contractors across all views
+- **Search** — find people by name across all orgs
+- **Talent tooltips** — band, category, and rationale on hover
+- **Redacted version** — all names replaced with blacked-out initials, verified clean
+- **Admin panel** — upload new Excel to regenerate and auto-commit to GitHub
+- **Monthly auto-regen** — GitHub Actions workflow runs on the 1st of each month
+- **Responsive layout** — works on desktop, tablet, and mobile
 
-## Org Structure
+## Input Data
 
-```
-Jayesh Sahasi (EVP Product & CTO)
-├── Steve Sims (Product-Design)
-│   ├── Kevin Miller, Jared Chappin, Salma Bargach, Felix Biju
-│   └── Trupti Telang (UX)
-├── Oleg Massakovskyy (QA)
-│   ├── Ashish Oza (Automation)
-│   ├── Rumana Ilyas
-│   ├── Jenny Wai Li
-│   └── Shefali Singh
-├── Jaimini Joshi (Dev)
-│   ├── Kamalaksha Ghosh (dotted-line to Jayesh), Alberto, Shishir, Angel, ...
-│   └── (Full Dev Org)
-├── Mahesh Kheny (Salesforce)
-│   └── Homer Santos → James Gomez, Raj Kommera
-└── Jagjit Singh (TPM)
-    └── Kashan Babar, Ishwinder Walia, C-Bhagyashree More
-```
+Single source of truth: `data/orgchart_master_data.xlsx` with 3 sheets:
 
-## Scrum Teams (20)
+| Sheet | Purpose |
+|-------|---------|
+| People | Names, titles, employment, org, reports-to, scrum teams, talent data |
+| Scrum Teams | Team membership with discipline and lead flags |
+| Teams Hierarchy | Team to Dev Lead, QA Lead, Director mappings |
 
-Analytics, Appgen, Automation, Cloud Engineering, Console, EER, EHub/Target, Elite Admin, Elite Studio, Eng Tools, Engineering AI, Engineering Support, Forums, Go Live, Integrations, Presenter, Salesforce, TPM, VC, Vids
+Legacy source files preserved in `data/legacy/` for backward compatibility.
+
+## Project Structure
+
+| File | Purpose |
+|------|---------|
+| `streamlit_app.py` | Streamlit web app (viewer + admin) |
+| `generate_org_html.py` | Generator: master Excel to HTML |
+| `generate_org_html_legacy.py` | Legacy generator (4 source files) |
+| `org_html_shared.py` | Shared utilities + HTML template |
+| `requirements.txt` | Python dependencies |
+| `.streamlit/config.toml` | Streamlit theme + server config |
+| `.github/workflows/regenerate.yml` | Monthly auto-regeneration |
 
 ## Redacted Version
 
-The redacted HTML replaces every person's name with a blacked-out format: initials are visible, remaining letters are replaced with block characters (e.g., "J████ S█████"). Node IDs are anonymized to `node-NNN`. No real names appear anywhere in the HTML source — not in data, IDs, variables, or comments. Rationale text has real names scrubbed. Not discoverable via view-source. Verified by automated scan on every generation. Structure, titles, talent data, team names, and employment status are preserved.
+The redacted HTML replaces every name with a blacked-out format: initials visible, remaining letters replaced with block characters (e.g., "J████ S█████"). Node IDs anonymized. No real names anywhere in the HTML source. Verified by automated scan on every generation.

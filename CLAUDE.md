@@ -7,29 +7,57 @@ Interactive org chart generator for Jayesh Sahasi's multi-org structure. Reads E
 ```
 orgchart/
   data/
-    on24.xlsx                                  # Definitive hierarchy (410 rows, full ON24)
-    JayeshSahasi_QA-Dev Org List.xlsx          # Per-org tabs (employment + teams)
-    JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx  # Titles
-    JayeshSahasi_SCRUMS.xlsx                   # Scrum teams + Teams Hierarchy
-  generate_org_html.py    # Generator script (Python)
-  org_drilldown.html      # Output: named version
-  org_drilldown_redacted.html  # Output: redacted version
+    orgchart_master_data.xlsx                  # Master data (single source of truth)
+    legacy/                                    # Original source files (backward compat)
+      on24.xlsx                                # Definitive hierarchy (410 rows, full ON24)
+      JayeshSahasi_QA-Dev Org List.xlsx        # Per-org tabs (employment + teams)
+      JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx  # Titles
+      JayeshSahasi_SCRUMS.xlsx                 # Scrum teams + Teams Hierarchy
+  generate_org_html.py        # Default generator (reads master Excel)
+  generate_org_html_legacy.py # Legacy generator (reads 4 original source files)
+  org_html_shared.py          # Shared functions (redaction, HTML template, utilities)
+  org_drilldown.html          # Output: named version
+  org_drilldown_redacted.html # Output: redacted version
+  streamlit_app.py            # Streamlit web app (viewer + admin)
+  requirements.txt            # Python dependencies for Streamlit Cloud
+  .streamlit/config.toml      # Streamlit theme + server config
+  .streamlit/secrets.toml     # Local secrets (gitignored)
+  .github/workflows/regenerate.yml  # Monthly auto-regeneration
 ```
 
 ## Running
 ```bash
+# Default: generate from master Excel
 python generate_org_html.py
+
+# Legacy: generate from original 4 source files (backward compat)
+python generate_org_html_legacy.py
 ```
 Requires: Python 3.8+, openpyxl (auto-installed if missing)
 
-## Data Sources (priority order)
+```bash
+# Streamlit web app (local)
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+## Data Sources
+
+### Master Excel (default)
+| Source | What it provides |
+|--------|-----------------|
+| `data/orgchart_master_data.xlsx` (People sheet) | All people with names, titles, employment, org, reports-to, scrum teams, talent data |
+| `data/orgchart_master_data.xlsx` (Scrum Teams sheet) | Team membership with discipline and lead flags |
+| `data/orgchart_master_data.xlsx` (Teams Hierarchy sheet) | Team → Dev Lead, QA Lead, Director mappings |
+
+### Legacy Sources (in `data/legacy/`)
 
 | Source | What it provides | Format |
 |--------|-----------------|--------|
-| `data/on24.xlsx` (on24 sheet) | **Definitive hierarchy** — 410 rows, full company | "Last, First" names |
-| `data/JayeshSahasi_QA-Dev Org List.xlsx` (per-org tabs) | Employment status, scrum team assignments, contractor roster | "First Last" names |
-| `data/JayeshSahasi_SCRUMS.xlsx` (Teams Hierachy sheet) | Team → Dev Lead, QA Lead, Director mappings | First names / short names |
-| `data/JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx` | Titles + Talent Band/Category/Rationale (75 people) | "First Last" |
+| `on24.xlsx` (on24 sheet) | **Definitive hierarchy** — 410 rows, full company | "Last, First" names |
+| `JayeshSahasi_QA-Dev Org List.xlsx` (per-org tabs) | Employment status, scrum team assignments, contractor roster | "First Last" names |
+| `JayeshSahasi_SCRUMS.xlsx` (Teams Hierachy sheet) | Team → Dev Lead, QA Lead, Director mappings | First names / short names |
+| `JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx` | Titles + Talent Band/Category/Rationale (75 people) | "First Last" |
 
 ## 5 Orgs (from dropdown)
 | Org | Jayesh DR | Source |
@@ -108,8 +136,41 @@ Skip rows at bottom of sheets that are audit/changelog entries via `CHANGELOG_SK
 ## HTML Template
 Uses raw string template `r'''...'''` with `__TITLE_SUFFIX__` and `__DATA_JSON__` placeholders (not f-strings — avoids JS quote escaping issues). Includes responsive CSS (`@media` breakpoints at 768px and 480px).
 
-## Key Config Constants
-- `ON24_FILE` / `ORG_FILE` / `SCRUMS_FILE` — data file paths
+## Shared Module (`org_html_shared.py`)
+Extracted functions used by both generators:
+- `normalize_name()`, `slugify()`, `is_contractor()`, `title_seniority_score()`
+- `redact_data()`, `verify_redaction()`, `generate_html()`
+- `_HTML_TEMPLATE` — the complete HTML/CSS/JS template
+
+## Streamlit App (`streamlit_app.py`)
+Password-protected web viewer deployed on Streamlit Community Cloud.
+
+### Authentication
+- Single password gate via `st.secrets["app_password"]`
+- All views require login; session-state based
+
+### Views (sidebar radio)
+- **Org Chart (Named)** — embeds `org_drilldown.html` via `st.components.v1.html()` + download button
+- **Org Chart (Redacted)** — same for redacted version
+- **Admin** — download current Excel, upload new Excel to regenerate + commit to GitHub
+
+### Admin Upload Flow
+1. Upload new `.xlsx` → runs generator pipeline in-memory
+2. Commits 3 files (Excel + 2 HTMLs) to GitHub via Contents API
+3. Streamlit Cloud auto-redeploys on new commit
+
+### Secrets (`.streamlit/secrets.toml` locally, Streamlit Cloud dashboard for prod)
+- `app_password` — viewer login password
+- `github_token` — GitHub PAT with `contents:write` scope
+- `github_repo` — `owner/repo` format
+
+### Monthly Regeneration (`.github/workflows/regenerate.yml`)
+- Cron: 1st of each month at midnight UTC
+- Also supports manual `workflow_dispatch`
+- Runs `python generate_org_html.py`, commits + pushes if HTML changed
+
+## Key Config Constants (legacy generator)
+- `ON24_FILE` / `ORG_FILE` / `SCRUMS_FILE` — legacy data file paths
 - `JAYESH_DRS` — list of 6 DR name hints
 - `DR_ORG_MAP` — maps DR names to org view names
 - `KAMAL_FULL_NAME` / `KAMAL_TITLE` — Kamal Ghosh identity
