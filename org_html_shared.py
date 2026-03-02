@@ -242,6 +242,23 @@ body {
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
 }
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 1000;
+    padding: 8px 16px;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    border-radius: 0 0 8px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.skip-link:focus {
+    left: 0;
+}
 
 /* Header */
 .header {
@@ -277,7 +294,7 @@ body {
 
 select, input[type="text"] {
     padding: 8px 12px;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.4);
     border-radius: 8px;
     background: rgba(255,255,255,0.1);
     color: white;
@@ -286,7 +303,9 @@ select, input[type="text"] {
     transition: border-color 0.2s;
 }
 select:focus, input[type="text"]:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
     border-color: rgba(59, 130, 246, 0.6);
     background: rgba(255,255,255,0.12);
 }
@@ -295,7 +314,7 @@ select option {
     color: white;
 }
 input[type="text"]::placeholder {
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.7);
 }
 
 .switch-group {
@@ -317,7 +336,8 @@ input[type="text"]::placeholder {
     position: relative;
     width: 44px;
     height: 24px;
-    background: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.6);
     border-radius: 12px;
     cursor: pointer;
     transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -371,6 +391,15 @@ input[type="text"]::placeholder {
 .nav-btn:active {
     transform: scale(0.97);
 }
+.nav-btn:focus-visible,
+.person-card:focus-visible,
+.team-pill:focus-visible,
+.all-scrum-card:focus-visible,
+.zoom-controls button:focus-visible,
+.switch:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
 
 .breadcrumb {
     display: flex;
@@ -380,7 +409,7 @@ input[type="text"]::placeholder {
     flex: 1;
 }
 .breadcrumb span {
-    color: #718096;
+    color: #64748b;
     font-size: 13px;
 }
 .breadcrumb a {
@@ -463,6 +492,14 @@ input[type="text"]::placeholder {
     background: rgba(245, 158, 11, 0.15);
     color: #d97706;
 }
+.manager-card .badge-fte {
+    background: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+}
+.manager-card .badge-contractor {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+}
 .manager-card .teams {
     margin-top: 10px;
     display: flex;
@@ -489,7 +526,7 @@ input[type="text"]::placeholder {
 .reports-label {
     text-align: center;
     font-size: 13px;
-    color: #718096;
+    color: #4a5568;
     margin-bottom: 16px;
     font-weight: 500;
 }
@@ -557,7 +594,7 @@ input[type="text"]::placeholder {
 }
 .person-card .dr-count {
     font-size: 11px;
-    color: #a0aec0;
+    color: #64748b;
     margin-top: 8px;
 }
 .person-card .teams {
@@ -693,7 +730,7 @@ input[type="text"]::placeholder {
 .all-scrum-card-body .disc-label {
     font-size: 11px;
     font-weight: 600;
-    color: #a0aec0;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-top: 8px;
@@ -723,8 +760,8 @@ input[type="text"]::placeholder {
     z-index: 100;
 }
 .zoom-controls button {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
     background: white;
@@ -771,13 +808,13 @@ input[type="text"]::placeholder {
 .missing-list li {
     padding: 4px 0;
     font-size: 13px;
-    color: #718096;
+    color: #4a5568;
 }
 
 /* Empty state */
 .empty-state {
     text-align: center;
-    color: #a0aec0;
+    color: #64748b;
     padding: 48px;
     font-size: 15px;
 }
@@ -790,6 +827,23 @@ input[type="text"]::placeholder {
 .list-view th { background: linear-gradient(180deg, #f5f7fa 0%, #edf0f7 100%); color: #475569; font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.6px; position: sticky; top: 0; z-index: 1; border-bottom: 2px solid #dde3ed; }
 .list-view th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.3; }
 .list-view th .sort-arrow.active { opacity: 1; color: #3b82f6; }
+th button {
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    font-weight: inherit;
+    width: 100%;
+    text-align: left;
+}
+th button:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
 .list-view tbody tr:nth-child(even) { background: #f9fafb; }
 .list-view tbody tr { transition: background 0.15s ease; }
 .list-view tbody tr:hover { background: #eff6ff; }
@@ -805,16 +859,16 @@ input[type="text"]::placeholder {
 .headcount {
     text-align: center;
     font-size: 12px;
-    color: rgba(255,255,255,0.7);
+    color: rgba(255,255,255,0.85);
     white-space: nowrap;
 }
 
 /* Talent info tooltip */
 .talent-info { display: inline-block; position: relative; cursor: pointer; margin-left: 6px; vertical-align: middle; }
-.talent-info .info-icon { width: 16px; height: 16px; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: 11px; font-weight: 700; text-align: center; line-height: 16px; font-style: italic; display: inline-block; }
+.talent-info .info-icon { width: 24px; height: 24px; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: 12px; font-weight: 700; text-align: center; line-height: 24px; font-style: italic; display: inline-block; cursor: pointer; }
 .talent-info .info-icon:hover { background: #3b82f6; color: #fff; }
-.talent-info .talent-tip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #0f172a; color: #f1f5f9; padding: 12px 16px; border-radius: 8px; font-size: 12px; line-height: 1.5; width: 300px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
-.talent-info:hover .talent-tip { display: block; }
+.talent-info .talent-tip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #0f172a; color: #f1f5f9; padding: 12px 16px; border-radius: 8px; font-size: 12px; line-height: 1.5; width: 300px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); pointer-events: auto; }
+.talent-info:hover .talent-tip, .talent-info:focus-within .talent-tip { display: block; }
 .talent-tip .tip-label { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 .talent-tip .tip-value { margin-bottom: 8px; }
 .talent-tip .tip-value:last-child { margin-bottom: 0; }
@@ -861,44 +915,57 @@ input[type="text"]::placeholder {
 .reports-grid .person-card:nth-child(7) { animation-delay: 0.14s; }
 .reports-grid .person-card:nth-child(8) { animation-delay: 0.16s; }
 .reports-grid .person-card:nth-child(n+9) { animation-delay: 0.18s; }
+@media (prefers-reduced-motion: reduce) {
+    .person-card,
+    .nav-btn,
+    .team-pill,
+    .switch,
+    .switch-knob,
+    .all-scrum-card,
+    .info-icon {
+        animation: none !important;
+        transition: none !important;
+    }
+}
 </style>
 </head>
 <body>
+<a href="#mainContent" class="skip-link">Skip to main content</a>
 
-<div class="header">
+<header class="header" role="banner">
     <h1>Org Chart__TITLE_SUFFIX__</h1>
     <div class="header-controls">
-        <select id="orgSelect" onchange="switchOrg(this.value)"></select>
-        <input type="text" id="searchBox" placeholder="Search by name..." onkeydown="if(event.key==='Enter')doSearch()">
+        <select id="orgSelect" aria-label="Select organization" onchange="switchOrg(this.value)"></select>
+        <input type="text" id="searchBox" aria-label="Search by name" placeholder="Search by name..." onkeydown="if(event.key==='Enter')doSearch()">
         <div class="switch-group">
             <label class="switch-label">
-                <div class="switch active" id="empToggle" onclick="toggleFilter('emp')"><div class="switch-knob"></div></div>
+                <div class="switch active" id="empToggle" role="switch" aria-checked="true" aria-label="Show employees" tabindex="0" onclick="toggleFilter('emp')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleFilter('emp')}"><div class="switch-knob"></div></div>
                 <span>Employees</span>
             </label>
             <label class="switch-label">
-                <div class="switch active" id="conToggle" onclick="toggleFilter('con')"><div class="switch-knob"></div></div>
+                <div class="switch active" id="conToggle" role="switch" aria-checked="true" aria-label="Show contractors" tabindex="0" onclick="toggleFilter('con')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleFilter('con')}"><div class="switch-knob"></div></div>
                 <span>Contractors</span>
             </label>
             <label class="switch-label" id="redactGroup" style="display:none">
-                <div class="switch" id="redactToggle" onclick="toggleFilter('redact')"><div class="switch-knob"></div></div>
+                <div class="switch" id="redactToggle" role="switch" aria-checked="false" aria-label="Redact names" tabindex="0" onclick="toggleFilter('redact')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleFilter('redact')}"><div class="switch-knob"></div></div>
                 <span>Redact</span>
             </label>
         </div>
-        <span class="headcount" id="headcount"></span>
+        <span class="headcount" id="headcount" aria-live="polite" aria-atomic="true"></span>
     </div>
-</div>
+</header>
 
-<div class="nav-bar">
+<nav class="nav-bar" aria-label="Org chart navigation">
     <button class="nav-btn" id="homeBtn" onclick="goHome()">Home</button>
     <button class="nav-btn" id="topBtn" onclick="goTop()">Top</button>
     <button class="nav-btn" id="upBtn" onclick="goUp()">Up</button>
     <button class="nav-btn" id="backToOrg" onclick="backToOrg()" style="display:none">Back to Org</button>
     <button class="nav-btn" id="listBtn" onclick="showListView()">List</button>
     <button class="nav-btn" id="scrumAllBtn" onclick="showAllScrumView()">Scrum</button>
-    <div class="breadcrumb" id="breadcrumb"></div>
-</div>
+    <nav class="breadcrumb" id="breadcrumb" aria-label="Breadcrumb"></nav>
+</nav>
 
-<div class="main" id="mainContent"></div>
+<main class="main" id="mainContent" tabindex="-1"></main>
 
 <script>
 const DATA = __DATA_JSON__;
@@ -928,6 +995,12 @@ function teamColor(name) {
     return TEAM_COLORS[Math.abs(hash) % TEAM_COLORS.length];
 }
 
+function teamPillTextColor(name) {
+    var darkMap = {'#f59e0b':'#92400e','#f97316':'#9a3412','#ea580c':'#9a3412','#ec4899':'#9d174d','#10b981':'#065f46','#14b8a6':'#134e4a'};
+    var base = teamColor(name);
+    return darkMap[base] || base;
+}
+
 function escHtml(s) {
     if (!s) return '';
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -935,8 +1008,8 @@ function escHtml(s) {
 
 function talentTooltip(node) {
     if (!node.talentBand && !node.talentCategory && !node.rationale) return '';
-    var html = '<span class="talent-info">';
-    html += '<span class="info-icon">i</span>';
+    var html = '<span class="talent-info" tabindex="0">';
+    html += '<span class="info-icon" role="img" aria-label="Talent information">i</span>';
     html += '<span class="talent-tip">';
     if (node.talentBand) html += '<div class="tip-label">Band</div><div class="tip-value">' + escHtml(node.talentBand) + '</div>';
     if (node.talentCategory) html += '<div class="tip-label">Category</div><div class="tip-value">' + escHtml(node.talentCategory) + '</div>';
@@ -1020,6 +1093,7 @@ function renderHome() {
     html += '</div>';
 
     document.getElementById('mainContent').innerHTML = html;
+    document.getElementById('mainContent').focus();
     // Show total headcount across all orgs (deduplicated)
     let total = 0, fte = 0, contractors = 0;
     const seenNames = {};
@@ -1050,6 +1124,9 @@ function toggleFilter(which) {
     document.getElementById('empToggle').classList.toggle('active', state.showEmp);
     document.getElementById('conToggle').classList.toggle('active', state.showCon);
     document.getElementById('redactToggle').classList.toggle('active', state.redacted);
+    document.getElementById('empToggle').setAttribute('aria-checked', state.showEmp);
+    document.getElementById('conToggle').setAttribute('aria-checked', state.showCon);
+    document.getElementById('redactToggle').setAttribute('aria-checked', state.redacted);
     if (state.allScrumView) showAllScrumView();
     else if (state.listView) renderList();
     else if (state.isHome) renderHome();
@@ -1159,6 +1236,7 @@ function renderScrum(teamName) {
     const groups = DATA.scrum[teamName];
     if (!groups) {
         document.getElementById('mainContent').innerHTML = '<div class="empty-state">No data for team: ' + escHtml(teamName) + '</div>';
+        document.getElementById('mainContent').focus();
         return;
     }
 
@@ -1196,7 +1274,7 @@ function renderScrum(teamName) {
                 ? '<span class="badge badge-contractor">Contractor</span>'
                 : '<span class="badge badge-fte">FTE</span>';
             html += '<div class="scrum-member' + (isLead ? ' is-lead' : '') + '">';
-            html += '<a onclick="navigateToOrgCard(\'' + escHtml(m.org) + "','" + escHtml(m.id) + '\')">' + escHtml(displayName(m.name)) + leadLabel + '</a>';
+            html += '<a href="#" onclick="event.preventDefault();navigateToOrgCard(\'' + escHtml(m.org) + "','" + escHtml(m.id) + '\')">' + escHtml(displayName(m.name)) + leadLabel + '</a>';
             html += talentTooltip(m);
             html += ' ' + badge;
             if (m.title) html += ' <span class="member-title">' + escHtml(m.title) + '</span>';
@@ -1208,6 +1286,7 @@ function renderScrum(teamName) {
 
     html += '</div>';
     document.getElementById('mainContent').innerHTML = html;
+    document.getElementById('mainContent').focus();
     updateHeadcount();
 }
 
@@ -1263,7 +1342,7 @@ function showAllScrumView() {
             });
         });
 
-        gridHtml += '<div class="all-scrum-card" onclick="showScrumView(\'' + escHtml(teamName) + '\')">'
+        gridHtml += '<div class="all-scrum-card" role="button" tabindex="0" onclick="showScrumView(\'' + escHtml(teamName) + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();showScrumView(\'' + escHtml(teamName) + '\')}">'
             + '<div class="all-scrum-card-header">' + escHtml(teamName)
             + ' <span class="count-badge">' + totalMembers + '</span></div>'
             + '<div class="all-scrum-card-body">' + bodyHtml + '</div>'
@@ -1281,6 +1360,7 @@ function showAllScrumView() {
         + '</div>';
 
     document.getElementById('mainContent').innerHTML = html;
+    document.getElementById('mainContent').focus();
     initAllScrumPanZoom();
 
     // Update headcount: unique members across all scrum teams
@@ -1435,10 +1515,11 @@ function renderListTable(rows) {
         if (sortable) {
             var isActive = state.listSortCol === c.key;
             var dir = isActive ? (state.listSortAsc ? '&#9650;' : '&#9660;') : '&#9650;';
-            arrow = ' <span class="sort-arrow' + (isActive ? ' active' : '') + '">' + dir + '</span>';
+            arrow = ' <span class="sort-arrow' + (isActive ? ' active' : '') + '" aria-hidden="true">' + dir + '</span>';
         }
         if (sortable) {
-            html += '<th onclick="sortListBy(\'' + c.key + '\')">' + c.label + arrow + '</th>';
+            var sortAttr = isActive ? (state.listSortAsc ? 'ascending' : 'descending') : 'none';
+            html += '<th aria-sort="' + sortAttr + '"><button type="button" onclick="sortListBy(\'' + c.key + '\')">' + c.label + arrow + '</button></th>';
         } else {
             html += '<th>' + c.label + '</th>';
         }
@@ -1446,7 +1527,7 @@ function renderListTable(rows) {
     html += '</tr></thead><tbody>';
     rows.forEach(function(r) {
         html += '<tr>';
-        html += '<td><a onclick="navigateToOrgCard(\'' + escHtml(r.orgKey) + "','" + escHtml(r.nodeId) + '\')">' + escHtml(displayName(r.name)) + '</a>' + talentTooltip(r) + '</td>';
+        html += '<td><a href="#" onclick="event.preventDefault();navigateToOrgCard(\'' + escHtml(r.orgKey) + "','" + escHtml(r.nodeId) + '\')">' + escHtml(displayName(r.name)) + '</a>' + talentTooltip(r) + '</td>';
         html += '<td>' + escHtml(r.title) + '</td>';
         var badgeCls = r.type === 'Contractor' ? 'badge-contractor' : 'badge-fte';
         html += '<td><span class="badge ' + badgeCls + '">' + r.type + '</span></td>';
@@ -1455,7 +1536,7 @@ function renderListTable(rows) {
         html += '<td>';
         if (r.scrumTeams.length) {
             r.scrumTeams.forEach(function(t) {
-                html += '<a class="team-pill" style="background:' + teamColor(t) + '22;color:' + teamColor(t) + ';cursor:pointer" onclick="showScrumView(\'' + escHtml(t).replace(/'/g,"\\\\'") + '\')">#' + escHtml(t) + '</a>';
+                html += '<a class="team-pill" href="#" style="background:' + teamColor(t) + '22;color:' + teamPillTextColor(t) + ';cursor:pointer" onclick="event.preventDefault();showScrumView(\'' + escHtml(t).replace(/'/g,"\\\\'") + '\')">#' + escHtml(t) + '</a>';
             });
         }
         html += '</td>';
@@ -1482,6 +1563,7 @@ function renderList() {
     bc.innerHTML = '<span class="current">List — ' + escHtml(label) + ' (' + rows.length + ')</span>';
 
     document.getElementById('mainContent').innerHTML = renderListTable(rows);
+    document.getElementById('mainContent').focus();
 
     // Update headcount
     var el = document.getElementById('headcount');
@@ -1518,11 +1600,11 @@ function render() {
     state.breadcrumb.forEach((id, i) => {
         const n = org.nodes[id];
         if (!n) return;
-        if (i > 0) bcHtml += '<span>&rsaquo;</span> ';
+        if (i > 0) bcHtml += '<span aria-hidden="true">&rsaquo;</span> ';
         if (i === state.breadcrumb.length - 1) {
             bcHtml += '<span class="current">' + escHtml(displayName(n.name)) + '</span>';
         } else {
-            bcHtml += '<a onclick="navigateTo(\'' + escHtml(id) + '\')">' + escHtml(displayName(n.name)) + '</a> ';
+            bcHtml += '<a href="#" onclick="event.preventDefault();navigateTo(\'' + escHtml(id) + '\')">' + escHtml(displayName(n.name)) + '</a> ';
         }
     });
     bc.innerHTML = bcHtml;
@@ -1535,7 +1617,7 @@ function render() {
     let teamPills = '';
     if (node.scrumTeams && node.scrumTeams.length) {
         teamPills = '<div class="teams">' + node.scrumTeams.map(t =>
-            '<a class="team-pill" style="background:' + teamColor(t) + '22;color:' + teamColor(t) + '" onclick="showScrumView(\'' + escHtml(t).replace(/'/g,"\\\\'") + '\')">#' + escHtml(t) + '</a>'
+            '<a class="team-pill" href="#" style="background:' + teamColor(t) + '22;color:' + teamPillTextColor(t) + '" onclick="event.preventDefault();showScrumView(\'' + escHtml(t).replace(/'/g,"\\\\'") + '\')">#' + escHtml(t) + '</a>'
         ).join('') + '</div>';
     }
 
@@ -1569,7 +1651,7 @@ function render() {
             let cTeams = '';
             if (child.scrumTeams && child.scrumTeams.length) {
                 cTeams = '<div class="teams">' + child.scrumTeams.map(t =>
-                    '<a class="team-pill" style="background:' + teamColor(t) + '22;color:' + teamColor(t) + '" onclick="event.stopPropagation();showScrumView(\'' + escHtml(t).replace(/'/g,"\\\\'") + '\')">#' + escHtml(t) + '</a>'
+                    '<a class="team-pill" href="#" style="background:' + teamColor(t) + '22;color:' + teamPillTextColor(t) + '" onclick="event.preventDefault();event.stopPropagation();showScrumView(\'' + escHtml(t).replace(/'/g,"\\\\'") + '\')">#' + escHtml(t) + '</a>'
                 ).join('') + '</div>';
             }
 
@@ -1578,7 +1660,7 @@ function render() {
             let drLabel = drCount > 0 ? '<div class="dr-count">' + drCount + ' report' + (drCount > 1 ? 's' : '') + '</div>' : '';
 
             const phClass = child.placeholder ? ' placeholder' : '';
-            html += '<div class="person-card' + phClass + '" onclick="navigateTo(\'' + escHtml(child.id) + '\')">';
+            html += '<div class="person-card' + phClass + '" role="button" tabindex="0" onclick="navigateTo(\'' + escHtml(child.id) + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();navigateTo(\'' + escHtml(child.id) + '\')}">';
             html += '<div class="name">' + escHtml(displayName(child.name)) + talentTooltip(child) + '</div>';
             if (child.title) html += '<div class="title">' + escHtml(child.title) + '</div>';
             html += cBadge;
@@ -1598,10 +1680,10 @@ function render() {
     const missing = DATA.missing[state.currentOrg] || [];
     if (missing.length > 0) {
         html += '<div class="missing-section">';
-        html += '<div class="missing-toggle" onclick="this.nextElementSibling.classList.toggle(\'open\')">';
-        html += '&#9888; ' + missing.length + ' people without titles in ' + escHtml(state.currentOrg) + ' (click to expand)';
-        html += '</div>';
-        html += '<div class="missing-list"><ul>';
+        html += '<button class="missing-toggle" aria-expanded="false" onclick="var list=this.nextElementSibling;list.classList.toggle(\'open\');this.setAttribute(\'aria-expanded\',list.classList.contains(\'open\'))">';
+        html += '<span aria-hidden="true">&#9888;</span> ' + missing.length + ' people without titles in ' + escHtml(state.currentOrg) + ' (click to expand)';
+        html += '</button>';
+        html += '<div class="missing-list"><ul role="list">';
         missing.forEach(name => {
             html += '<li>' + escHtml(displayName(name)) + '</li>';
         });
@@ -1609,6 +1691,7 @@ function render() {
     }
 
     document.getElementById('mainContent').innerHTML = html;
+    document.getElementById('mainContent').focus();
     updateHeadcount();
 }
 
@@ -1649,6 +1732,14 @@ if (!document.title.includes('Redacted')) {
     document.getElementById('redactGroup').style.display = '';
 }
 init();
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        var active = document.activeElement;
+        if (active && active.classList.contains('talent-info')) {
+            active.blur();
+        }
+    }
+});
 </script>
 </body>
 </html>'''
