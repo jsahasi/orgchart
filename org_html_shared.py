@@ -679,11 +679,11 @@ input[type="text"]::placeholder {
     font-weight: 700;
 }
 .scrum-member a {
-    color: var(--org-accent);
     text-decoration: none;
 }
 .scrum-member a:hover {
     text-decoration: underline;
+    filter: brightness(0.85);
 }
 .scrum-member .member-title {
     color: #718096;
@@ -830,7 +830,7 @@ input[type="text"]::placeholder {
 }
 
 /* List view table */
-.list-view { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 4px; }
+.list-view { overflow-x: visible; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 4px; }
 .list-view table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .list-view th { cursor: pointer; user-select: none; }
 .list-view th, .list-view td { text-align: left; padding: 11px 14px; border-bottom: 1px solid #eef1f6; }
@@ -857,8 +857,8 @@ th button:focus-visible {
 .list-view tbody tr:nth-child(even) { background: #f9fafb; }
 .list-view tbody tr { transition: background 0.15s ease; }
 .list-view tbody tr:hover { background: #eff6ff; }
-.list-view td a { color: var(--org-accent); cursor: pointer; text-decoration: none; font-weight: 500; }
-.list-view td a:hover { color: #1d4ed8; text-decoration: underline; }
+.list-view td a { cursor: pointer; text-decoration: none; font-weight: 500; }
+.list-view td a:hover { text-decoration: underline; filter: brightness(0.85); }
 .list-view .team-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; margin: 1px 3px; text-decoration: none; font-weight: 500; transition: opacity 0.15s ease; }
 .list-view .team-pill:hover { opacity: 0.75; }
 .list-view .badge { font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: 600; }
@@ -1309,7 +1309,8 @@ function renderScrum(teamName) {
                 ? '<span class="badge badge-contractor">Contractor</span>'
                 : '<span class="badge badge-fte">FTE</span>';
             html += '<div class="scrum-member' + (isLead ? ' is-lead' : '') + '">';
-            html += '<a href="#" onclick="event.preventDefault();navigateToOrgCard(\'' + escHtml(m.org) + "','" + escHtml(m.id) + '\')">' + escHtml(displayName(m.name)) + leadLabel + '</a>';
+            var mTheme = ORG_THEMES[m.org] || ORG_THEMES['__HOME__'];
+            html += '<a href="#" style="color:' + mTheme.accent + '" onclick="event.preventDefault();navigateToOrgCard(\'' + escHtml(m.org) + "','" + escHtml(m.id) + '\')">' + escHtml(displayName(m.name)) + leadLabel + '</a>';
             html += talentTooltip(m);
             html += ' ' + badge;
             if (m.title) html += ' <span class="member-title">' + escHtml(m.title) + '</span>';
@@ -1563,7 +1564,8 @@ function renderListTable(rows) {
     html += '</tr></thead><tbody>';
     rows.forEach(function(r) {
         html += '<tr>';
-        html += '<td><a href="#" onclick="event.preventDefault();navigateToOrgCard(\'' + escHtml(r.orgKey) + "','" + escHtml(r.nodeId) + '\')">' + escHtml(displayName(r.name)) + '</a>' + talentTooltip(r) + '</td>';
+        var lnkTheme = ORG_THEMES[r.orgKey] || ORG_THEMES['__HOME__'];
+        html += '<td><a href="#" style="color:' + lnkTheme.accent + '" onclick="event.preventDefault();navigateToOrgCard(\'' + escHtml(r.orgKey) + "','" + escHtml(r.nodeId) + '\')">' + escHtml(displayName(r.name)) + '</a>' + talentTooltip(r) + '</td>';
         html += '<td>' + escHtml(r.title) + '</td>';
         var badgeCls = r.type === 'Contractor' ? 'badge-contractor' : 'badge-fte';
         html += '<td><span class="badge ' + badgeCls + '">' + r.type + '</span></td>';
