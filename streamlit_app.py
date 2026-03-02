@@ -5,6 +5,9 @@ Password-protected app with:
 - Named org chart view (embed + download)
 - Redacted org chart view (embed + download)
 - Admin panel (upload/download Excel, regenerate HTMLs, commit to GitHub)
+
+Data files (Excel + HTML) live in a separate private repo (orgchart-data)
+and are fetched at runtime via the GitHub API.
 """
 
 import sys
@@ -31,15 +34,70 @@ from org_html_shared import generate_html, redact_data, verify_redaction, normal
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 
-NAMED_HTML = PROJECT_ROOT / "org_drilldown.html"
-REDACTED_HTML = PROJECT_ROOT / "org_drilldown_redacted.html"
-MASTER_EXCEL = PROJECT_ROOT / "data" / "orgchart_master_data.xlsx"
-
 st.set_page_config(
     page_title="Org Chart",
     page_icon="🏢",
     layout="wide",
 )
+
+
+# ─── GitHub Data Access ──────────────────────────────────────────────────────
+
+def _github_headers():
+    """Return auth headers for GitHub API."""
+    return {
+        "Authorization": f"token {st.secrets['github_token']}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+
+
+def _data_repo():
+    """Return the private data repo name."""
+    return st.secrets["data_repo"]
+
+
+@st.cache_data(ttl=300)
+def _fetch_file(path: str) -> bytes | None:
+    """Fetch a file from the private data repo. Returns raw bytes or None."""
+    url = f"https://api.github.com/repos/{_data_repo()}/contents/{path}"
+    resp = requests.get(url, headers=_github_headers())
+    if resp.status_code != 200:
+        return None
+    content_b64 = resp.json()["content"]
+    return base64.b64decode(content_b64)
+
+
+def _fetch_html(path: str) -> str | None:
+    """Fetch an HTML file from the private data repo as a string."""
+    data = _fetch_file(path)
+    if data is None:
+        return None
+    return data.decode("utf-8")
+
+
+def _get_file_sha(repo: str, path: str) -> str | None:
+    """Get the current SHA of a file in a repo (needed for updates)."""
+    url = f"https://api.github.com/repos/{repo}/contents/{path}"
+    resp = requests.get(url, headers=_github_headers())
+    if resp.status_code == 200:
+        return resp.json()["sha"]
+    return None
+
+
+def _commit_file(repo: str, path: str, content_bytes: bytes, message: str):
+    """Create or update a file in GitHub via the Contents API."""
+    url = f"https://api.github.com/repos/{repo}/contents/{path}"
+    encoded = base64.b64encode(content_bytes).decode("ascii")
+    payload = {
+        "message": message,
+        "content": encoded,
+    }
+    sha = _get_file_sha(repo, path)
+    if sha:
+        payload["sha"] = sha
+    resp = requests.put(url, json=payload, headers=_github_headers())
+    resp.raise_for_status()
+    return resp.json()
 
 
 # ─── Authentication ──────────────────────────────────────────────────────────
@@ -65,13 +123,12 @@ def login_form():
 
 # ─── Views ───────────────────────────────────────────────────────────────────
 
-def view_org_chart(html_path: Path, label: str):
-    """Embed an HTML org chart with a download button."""
-    if not html_path.exists():
-        st.warning(f"{html_path.name} not found. Run the generator first.")
+def view_org_chart(remote_path: str, filename: str, label: str):
+    """Fetch and embed an HTML org chart with a download button."""
+    html_content = _fetch_html(remote_path)
+    if html_content is None:
+        st.warning(f"{filename} not found in data repo. Upload via Admin to generate.")
         return
-
-    html_content = html_path.read_text(encoding="utf-8")
 
     col1, col2 = st.columns([6, 1])
     with col1:
@@ -80,7 +137,7 @@ def view_org_chart(html_path: Path, label: str):
         st.download_button(
             label="Download HTML",
             data=html_content,
-            file_name=html_path.name,
+            file_name=filename,
             mime="text/html",
         )
 
@@ -88,39 +145,6 @@ def view_org_chart(html_path: Path, label: str):
 
 
 # ─── Admin ───────────────────────────────────────────────────────────────────
-
-def _github_headers():
-    """Return auth headers for GitHub API."""
-    return {
-        "Authorization": f"token {st.secrets['github_token']}",
-        "Accept": "application/vnd.github.v3+json",
-    }
-
-
-def _get_file_sha(repo: str, path: str) -> str | None:
-    """Get the current SHA of a file in the repo (needed for updates)."""
-    url = f"https://api.github.com/repos/{repo}/contents/{path}"
-    resp = requests.get(url, headers=_github_headers())
-    if resp.status_code == 200:
-        return resp.json()["sha"]
-    return None
-
-
-def _commit_file(repo: str, path: str, content_bytes: bytes, message: str):
-    """Create or update a file in GitHub via the Contents API."""
-    url = f"https://api.github.com/repos/{repo}/contents/{path}"
-    encoded = base64.b64encode(content_bytes).decode("ascii")
-    payload = {
-        "message": message,
-        "content": encoded,
-    }
-    sha = _get_file_sha(repo, path)
-    if sha:
-        payload["sha"] = sha
-    resp = requests.put(url, json=payload, headers=_github_headers())
-    resp.raise_for_status()
-    return resp.json()
-
 
 def regenerate_from_excel(excel_path: Path):
     """Run the generation pipeline on the given Excel file.
@@ -173,18 +197,20 @@ def admin_panel():
     """Admin panel: download/upload Excel, regenerate, commit to GitHub."""
     st.subheader("Admin Panel")
 
+    data_repo = _data_repo()
+
     # ── Download current Excel ──
     st.markdown("### Download Current Excel")
-    if MASTER_EXCEL.exists():
-        with open(MASTER_EXCEL, "rb") as f:
-            st.download_button(
-                label="Download orgchart_master_data.xlsx",
-                data=f.read(),
-                file_name="orgchart_master_data.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
+    excel_bytes = _fetch_file("data/orgchart_master_data.xlsx")
+    if excel_bytes:
+        st.download_button(
+            label="Download orgchart_master_data.xlsx",
+            data=excel_bytes,
+            file_name="orgchart_master_data.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
     else:
-        st.warning("Master Excel file not found.")
+        st.warning("Master Excel file not found in data repo.")
 
     st.divider()
 
@@ -196,9 +222,8 @@ def admin_panel():
         key="excel_upload",
     )
 
-    if uploaded and st.button("Regenerate & Commit to GitHub", type="primary"):
+    if uploaded and st.button("Regenerate & Commit", type="primary"):
         with st.spinner("Regenerating org charts..."):
-            # Write uploaded file to temp location
             with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
                 tmp.write(uploaded.getvalue())
                 tmp_path = Path(tmp.name)
@@ -215,29 +240,30 @@ def admin_panel():
 
         st.success("HTML files regenerated successfully.")
 
-        # Commit to GitHub
-        repo = st.secrets["github_repo"]
-        with st.spinner("Committing to GitHub..."):
+        # Commit all 3 files to the private data repo
+        with st.spinner("Committing to data repo..."):
             try:
                 _commit_file(
-                    repo,
+                    data_repo,
                     "data/orgchart_master_data.xlsx",
                     uploaded.getvalue(),
                     "Update master Excel via Streamlit admin",
                 )
                 _commit_file(
-                    repo,
+                    data_repo,
                     "org_drilldown.html",
                     named_html.encode("utf-8"),
                     "Regenerate named org chart via Streamlit admin",
                 )
                 _commit_file(
-                    repo,
+                    data_repo,
                     "org_drilldown_redacted.html",
                     redacted_html.encode("utf-8"),
                     "Regenerate redacted org chart via Streamlit admin",
                 )
-                st.success("All 3 files committed to GitHub. Streamlit Cloud will auto-redeploy.")
+                # Clear the cached data so next view loads fresh files
+                _fetch_file.clear()
+                st.success("All 3 files committed to data repo.")
             except requests.HTTPError as e:
                 st.error(f"GitHub commit failed: {e}")
                 st.code(e.response.text if e.response else "No response body")
@@ -263,9 +289,9 @@ def main():
         st.rerun()
 
     if view == "Org Chart (Named)":
-        view_org_chart(NAMED_HTML, "Org Chart")
+        view_org_chart("org_drilldown.html", "org_drilldown.html", "Org Chart")
     elif view == "Org Chart (Redacted)":
-        view_org_chart(REDACTED_HTML, "Org Chart (Redacted)")
+        view_org_chart("org_drilldown_redacted.html", "org_drilldown_redacted.html", "Org Chart (Redacted)")
     elif view == "Admin":
         admin_panel()
 

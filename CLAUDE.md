@@ -4,26 +4,30 @@
 Interactive org chart generator for Jayesh Sahasi's multi-org structure. Reads Excel workbooks and produces two standalone HTML files with drilldown navigation.
 
 ## Project Structure
+
+### Code repo (`jsahasi/orgchart`) — public
 ```
 orgchart/
-  data/
-    orgchart_master_data.xlsx                  # Master data (single source of truth)
-    legacy/                                    # Original source files (backward compat)
-      on24.xlsx                                # Definitive hierarchy (410 rows, full ON24)
-      JayeshSahasi_QA-Dev Org List.xlsx        # Per-org tabs (employment + teams)
-      JayeshSahasi_EngProduct_Jayesh_Talent_Snapshot_*.xlsx  # Titles
-      JayeshSahasi_SCRUMS.xlsx                 # Scrum teams + Teams Hierarchy
   generate_org_html.py        # Default generator (reads master Excel)
   generate_org_html_legacy.py # Legacy generator (reads 4 original source files)
   org_html_shared.py          # Shared functions (redaction, HTML template, utilities)
-  org_drilldown.html          # Output: named version
-  org_drilldown_redacted.html # Output: redacted version
   streamlit_app.py            # Streamlit web app (viewer + admin)
   requirements.txt            # Python dependencies for Streamlit Cloud
   .streamlit/config.toml      # Streamlit theme + server config
   .streamlit/secrets.toml     # Local secrets (gitignored)
   .github/workflows/regenerate.yml  # Monthly auto-regeneration
 ```
+
+### Data repo (`jsahasi/orgchart-data`) — private
+```
+orgchart-data/
+  data/
+    orgchart_master_data.xlsx  # Master data (single source of truth)
+  org_drilldown.html           # Output: named version
+  org_drilldown_redacted.html  # Output: redacted version
+```
+
+Data files are kept in a separate private repo to prevent exposure of employee data. The Streamlit app fetches them at runtime via GitHub API using `github_token`.
 
 ## Running
 ```bash
@@ -156,18 +160,20 @@ Password-protected web viewer deployed on Streamlit Community Cloud.
 
 ### Admin Upload Flow
 1. Upload new `.xlsx` → runs generator pipeline in-memory
-2. Commits 3 files (Excel + 2 HTMLs) to GitHub via Contents API
-3. Streamlit Cloud auto-redeploys on new commit
+2. Commits 3 files (Excel + 2 HTMLs) to private data repo (`jsahasi/orgchart-data`) via Contents API
 
 ### Secrets (`.streamlit/secrets.toml` locally, Streamlit Cloud dashboard for prod)
 - `app_password` — viewer login password
-- `github_token` — GitHub PAT with `contents:write` scope
-- `github_repo` — `owner/repo` format
+- `github_token` — GitHub PAT with `contents:write` scope on both repos
+- `github_repo` — code repo (`jsahasi/orgchart`)
+- `data_repo` — private data repo (`jsahasi/orgchart-data`)
 
 ### Monthly Regeneration (`.github/workflows/regenerate.yml`)
 - Cron: 1st of each month at midnight UTC
 - Also supports manual `workflow_dispatch`
-- Runs `python generate_org_html.py`, commits + pushes if HTML changed
+- Checks out both code repo and data repo
+- Runs `python generate_org_html.py`, commits + pushes HTML to data repo if changed
+- Requires `DATA_REPO_TOKEN` repository secret (PAT with access to `orgchart-data`)
 
 ## Key Config Constants (legacy generator)
 - `ON24_FILE` / `ORG_FILE` / `SCRUMS_FILE` — legacy data file paths

@@ -4,6 +4,13 @@ Interactive org chart viewer for a multi-org engineering structure. Reads a mast
 
 Deployed on [Streamlit Community Cloud](https://share.streamlit.io) as a password-protected web app.
 
+## Architecture
+
+- **Code repo** (`jsahasi/orgchart`) — public, contains only code (no data)
+- **Data repo** (`jsahasi/orgchart-data`) — private, contains Excel + generated HTML files
+
+The Streamlit app fetches data files at runtime from the private repo via GitHub API, keeping employee data out of the public repo.
+
 ## Quick Start
 
 ### Generate HTML locally
@@ -11,26 +18,27 @@ Deployed on [Streamlit Community Cloud](https://share.streamlit.io) as a passwor
 pip install openpyxl
 python generate_org_html.py
 ```
-Produces `org_drilldown.html` (named) and `org_drilldown_redacted.html` (redacted). Open either in any browser — fully self-contained.
+Requires `data/orgchart_master_data.xlsx` in the working directory. Produces `org_drilldown.html` (named) and `org_drilldown_redacted.html` (redacted).
 
 ### Run the Streamlit app locally
 ```bash
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
-Password: configured in `.streamlit/secrets.toml`
+Configure `.streamlit/secrets.toml` with passwords and GitHub token.
 
 ## Deployment (Streamlit Community Cloud)
 
-1. Push this repo to GitHub (private recommended)
-2. Go to [share.streamlit.io](https://share.streamlit.io) and connect the repo
-3. Set **Main file path** to `streamlit_app.py`
-4. In **Advanced settings > Secrets**, add:
+1. Connect this repo at [share.streamlit.io](https://share.streamlit.io)
+2. Set **Main file path** to `streamlit_app.py`
+3. In **Advanced settings > Secrets**, add:
    ```toml
    app_password = "your-password"
    github_token = "ghp_your_token"
-   github_repo = "owner/orgchart"
+   github_repo = "jsahasi/orgchart"
+   data_repo = "jsahasi/orgchart-data"
    ```
+4. The `github_token` needs `contents:write` on both repos
 5. Monthly auto-regeneration runs via GitHub Actions (1st of each month)
 
 ## Features
@@ -42,21 +50,9 @@ Password: configured in `.streamlit/secrets.toml`
 - **Search** — find people by name across all orgs
 - **Talent tooltips** — band, category, and rationale on hover
 - **Redacted version** — all names replaced with blacked-out initials, verified clean
-- **Admin panel** — upload new Excel to regenerate and auto-commit to GitHub
+- **Admin panel** — upload new Excel to regenerate and auto-commit to data repo
 - **Monthly auto-regen** — GitHub Actions workflow runs on the 1st of each month
 - **Responsive layout** — works on desktop, tablet, and mobile
-
-## Input Data
-
-Single source of truth: `data/orgchart_master_data.xlsx` with 3 sheets:
-
-| Sheet | Purpose |
-|-------|---------|
-| People | Names, titles, employment, org, reports-to, scrum teams, talent data |
-| Scrum Teams | Team membership with discipline and lead flags |
-| Teams Hierarchy | Team to Dev Lead, QA Lead, Director mappings |
-
-Legacy source files preserved in `data/legacy/` for backward compatibility.
 
 ## Project Structure
 

@@ -6,15 +6,19 @@ on:
     - cron: '0 0 1 * *'
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   regenerate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout code repo
         uses: actions/checkout@v4
+
+      - name: Checkout data repo
+        uses: actions/checkout@v4
+        with:
+          repository: jsahasi/orgchart-data
+          token: ${{ secrets.DATA_REPO_TOKEN }}
+          path: data-repo
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -24,16 +28,28 @@ jobs:
       - name: Install dependencies
         run: pip install openpyxl
 
+      - name: Copy Excel from data repo
+        run: |
+          mkdir -p data
+          cp data-repo/data/orgchart_master_data.xlsx data/
+
       - name: Regenerate org chart HTML
         run: python generate_org_html.py
 
+      - name: Copy outputs to data repo
+        run: |
+          cp org_drilldown.html data-repo/
+          cp org_drilldown_redacted.html data-repo/
+
       - name: Check for changes
         id: changes
+        working-directory: data-repo
         run: |
           git diff --quiet || echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Commit and push
+      - name: Commit and push to data repo
         if: steps.changes.outputs.changed == 'true'
+        working-directory: data-repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
