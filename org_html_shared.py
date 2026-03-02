@@ -230,14 +230,17 @@ _HTML_TEMPLATE = r'''<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Org Chart__TITLE_SUFFIX__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background: #f5f7fa;
-    color: #1a1a2e;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Header */
@@ -249,16 +252,19 @@ body {
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 4px 20px rgba(0,0,0,0.08);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
 .header h1 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     white-space: nowrap;
+    letter-spacing: -0.3px;
 }
 
 .header-controls {
@@ -280,7 +286,9 @@ select, input[type="text"] {
     transition: border-color 0.2s;
 }
 select:focus, input[type="text"]:focus {
-    border-color: rgba(255,255,255,0.5);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.6);
+    background: rgba(255,255,255,0.12);
 }
 select option {
     background: #1a1a2e;
@@ -312,11 +320,11 @@ input[type="text"]::placeholder {
     background: rgba(255,255,255,0.25);
     border-radius: 12px;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
 }
 .switch.active {
-    background: #34c759;
+    background: #10b981;
 }
 .switch-knob {
     position: absolute;
@@ -326,7 +334,7 @@ input[type="text"]::placeholder {
     height: 20px;
     background: #fff;
     border-radius: 50%;
-    transition: transform 0.3s;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 .switch.active .switch-knob {
@@ -349,14 +357,19 @@ input[type="text"]::placeholder {
     border: 1px solid #d1d9e6;
     border-radius: 6px;
     background: white;
-    color: #4a5568;
+    color: #475569;
     cursor: pointer;
     font-size: 13px;
+    font-weight: 500;
     transition: all 0.2s;
 }
 .nav-btn:hover {
-    background: #f0f4f8;
-    border-color: #a0aec0;
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+.nav-btn:active {
+    transform: scale(0.97);
 }
 
 .breadcrumb {
@@ -406,12 +419,25 @@ input[type="text"]::placeholder {
     border-radius: 16px;
     padding: 24px 32px;
     text-align: center;
-    box-shadow: 0 8px 32px rgba(26,26,46,0.2);
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.25);
     min-width: 280px;
     max-width: 400px;
+    overflow: hidden;
+    position: relative;
+}
+.manager-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    pointer-events: none;
 }
 .manager-card .name {
-    font-size: 20px;
+    font-size: 22px;
+    letter-spacing: -0.3px;
     font-weight: 700;
     margin-bottom: 4px;
 }
@@ -430,12 +456,12 @@ input[type="text"]::placeholder {
     letter-spacing: 0.5px;
 }
 .badge-fte {
-    background: rgba(72,187,120,0.2);
-    color: #68d391;
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
 }
 .badge-contractor {
-    background: rgba(237,137,54,0.2);
-    color: #f6ad55;
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
 }
 .manager-card .teams {
     margin-top: 10px;
@@ -481,26 +507,42 @@ input[type="text"]::placeholder {
     background: white;
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border: 1px solid #e8ecf1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    border: 1px solid #e2e8f0;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    overflow: hidden;
+}
+.person-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.person-card:hover::before {
+    opacity: 1;
 }
 .person-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-    border-color: #3182ce;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+    border-color: #3b82f6;
 }
 .person-card .name {
     font-size: 15px;
     font-weight: 600;
-    color: #1a1a2e;
+    color: #0f172a;
+    letter-spacing: -0.2px;
     margin-bottom: 4px;
 }
 .person-card .title {
     font-size: 12px;
-    color: #718096;
+    color: #64748b;
     margin-bottom: 8px;
     line-height: 1.4;
 }
@@ -532,16 +574,18 @@ input[type="text"]::placeholder {
 /* Team pill */
 .team-pill {
     display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s;
     text-decoration: none;
+    letter-spacing: 0.2px;
 }
 .team-pill:hover {
     opacity: 0.8;
+    transform: translateY(-1px);
 }
 
 /* Scrum view */
@@ -552,8 +596,9 @@ input[type="text"]::placeholder {
 .scrum-header {
     font-size: 24px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: #0f172a;
     margin-bottom: 24px;
+    letter-spacing: -0.5px;
 }
 .discipline-section {
     margin-bottom: 24px;
@@ -566,12 +611,12 @@ input[type="text"]::placeholder {
 .discipline-title {
     font-size: 14px;
     font-weight: 700;
-    color: #4a5568;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #e8ecf1;
+    border-bottom: 2px solid #f1f5f9;
 }
 .scrum-member {
     display: flex;
@@ -622,14 +667,15 @@ input[type="text"]::placeholder {
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border: 1px solid #e8ecf1;
+    border: 1px solid #e2e8f0;
     width: 280px;
     cursor: pointer;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, border-color 0.2s;
     flex-shrink: 0;
 }
 .all-scrum-card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+    border-color: #3b82f6;
 }
 .all-scrum-card-header {
     padding: 14px 16px;
@@ -746,7 +792,7 @@ input[type="text"]::placeholder {
 .list-view th .sort-arrow.active { opacity: 1; color: #3b82f6; }
 .list-view tbody tr:nth-child(even) { background: #f9fafb; }
 .list-view tbody tr { transition: background 0.15s ease; }
-.list-view tbody tr:hover { background: #eef3ff; }
+.list-view tbody tr:hover { background: #eff6ff; }
 .list-view td a { color: #2563eb; cursor: pointer; text-decoration: none; font-weight: 500; }
 .list-view td a:hover { color: #1d4ed8; text-decoration: underline; }
 .list-view .team-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; margin: 1px 3px; text-decoration: none; font-weight: 500; transition: opacity 0.15s ease; }
@@ -767,7 +813,7 @@ input[type="text"]::placeholder {
 .talent-info { display: inline-block; position: relative; cursor: pointer; margin-left: 6px; vertical-align: middle; }
 .talent-info .info-icon { width: 16px; height: 16px; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: 11px; font-weight: 700; text-align: center; line-height: 16px; font-style: italic; display: inline-block; }
 .talent-info .info-icon:hover { background: #3b82f6; color: #fff; }
-.talent-info .talent-tip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1e293b; color: #f1f5f9; padding: 12px 16px; border-radius: 8px; font-size: 12px; line-height: 1.5; width: 300px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); pointer-events: none; }
+.talent-info .talent-tip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #0f172a; color: #f1f5f9; padding: 12px 16px; border-radius: 8px; font-size: 12px; line-height: 1.5; width: 300px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 .talent-info:hover .talent-tip { display: block; }
 .talent-tip .tip-label { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 .talent-tip .tip-value { margin-bottom: 8px; }
@@ -796,7 +842,25 @@ input[type="text"]::placeholder {
     .header-controls { flex-direction: column; }
     .manager-card { padding: 16px; }
     .reports-grid { grid-template-columns: 1fr; }
+    .person-card { animation-delay: 0s !important; }
 }
+
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.person-card {
+    animation: fadeSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.reports-grid .person-card:nth-child(1) { animation-delay: 0.02s; }
+.reports-grid .person-card:nth-child(2) { animation-delay: 0.04s; }
+.reports-grid .person-card:nth-child(3) { animation-delay: 0.06s; }
+.reports-grid .person-card:nth-child(4) { animation-delay: 0.08s; }
+.reports-grid .person-card:nth-child(5) { animation-delay: 0.10s; }
+.reports-grid .person-card:nth-child(6) { animation-delay: 0.12s; }
+.reports-grid .person-card:nth-child(7) { animation-delay: 0.14s; }
+.reports-grid .person-card:nth-child(8) { animation-delay: 0.16s; }
+.reports-grid .person-card:nth-child(n+9) { animation-delay: 0.18s; }
 </style>
 </head>
 <body>
@@ -856,10 +920,7 @@ let state = {
 };
 
 // ── Color palette for team pills ──
-const TEAM_COLORS = [
-    '#3182ce','#e94560','#38a169','#d69e2e','#805ad5','#dd6b20',
-    '#319795','#b83280','#2b6cb0','#c05621','#2f855a','#6b46c1'
-];
+const TEAM_COLORS = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#f97316','#14b8a6','#ec4899','#6366f1','#ea580c','#059669','#7c3aed'];
 
 function teamColor(name) {
     let hash = 0;

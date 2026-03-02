@@ -41,6 +41,92 @@ st.set_page_config(
 )
 
 
+# ─── Custom Styling ──────────────────────────────────────────────────────────
+
+def inject_custom_css():
+    """Inject custom CSS to override default Streamlit styles."""
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    /* Hide default Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header[data-testid="stHeader"] {display: none;}
+
+    /* Global typography */
+    html, body, [class*="css"] {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Sidebar: dark gradient */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+    }
+    section[data-testid="stSidebar"] * {
+        color: #f1f5f9 !important;
+    }
+    section[data-testid="stSidebar"] hr {
+        border-color: rgba(255,255,255,0.1) !important;
+    }
+    section[data-testid="stSidebar"] .stButton > button {
+        background: rgba(255,255,255,0.06) !important;
+        border: 1px solid rgba(255,255,255,0.12) !important;
+        color: #f1f5f9 !important;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    section[data-testid="stSidebar"] .stButton > button:hover {
+        background: rgba(255,255,255,0.12) !important;
+        border-color: rgba(255,255,255,0.2) !important;
+    }
+
+    /* Primary button styling */
+    .stButton > button[kind="primary"],
+    .stButton > button[data-testid="stBaseButton-primary"] {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border: none !important;
+        border-radius: 8px;
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+    .stButton > button[kind="primary"]:hover,
+    .stButton > button[data-testid="stBaseButton-primary"]:hover {
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+        transform: translateY(-1px);
+    }
+
+    /* Download button styling */
+    .stDownloadButton > button {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px;
+        color: #0f172a !important;
+        font-weight: 500;
+    }
+    .stDownloadButton > button:hover {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    /* File uploader */
+    [data-testid="stFileUploader"] {
+        border: 2px dashed #cbd5e1 !important;
+        border-radius: 12px;
+        padding: 1.5rem;
+        background: #f8fafc;
+    }
+    [data-testid="stFileUploader"]:hover {
+        border-color: #3b82f6 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
 # ─── GitHub Data Access ──────────────────────────────────────────────────────
 
 def _github_headers():
@@ -108,17 +194,42 @@ def check_auth():
 
 
 def login_form():
-    """Render the login form and handle authentication."""
-    st.markdown("## Org Chart Viewer")
-    st.markdown("Please enter the password to continue.")
+    """Render a branded, centered login form."""
+    inject_custom_css()
 
-    password = st.text_input("Password", type="password", key="login_password")
-    if st.button("Login", type="primary"):
-        if password == st.secrets["app_password"]:
-            st.session_state["authenticated"] = True
-            st.rerun()
-        else:
-            st.error("Incorrect password.")
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    with col2:
+        st.markdown("""
+        <div style="text-align: center; padding: 4rem 0 1.5rem 0;">
+            <div style="
+                width: 64px; height: 64px;
+                background: linear-gradient(135deg, #0f172a, #1e293b);
+                border-radius: 16px; margin: 0 auto 1.5rem;
+                display: flex; align-items: center; justify-content: center;
+                box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+                font-size: 28px; line-height: 1;
+            ">&#127970;</div>
+            <h1 style="
+                font-family: 'Inter', sans-serif;
+                font-size: 28px; font-weight: 700;
+                color: #0f172a; margin-bottom: 8px;
+            ">Org Chart</h1>
+            <p style="color: #64748b; font-size: 15px; margin-bottom: 2rem;">
+                Enter your password to access the org chart viewer
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        password = st.text_input(
+            "Password", type="password", key="login_password",
+            label_visibility="collapsed", placeholder="Enter password...",
+        )
+        if st.button("Sign In", type="primary", use_container_width=True):
+            if password == st.secrets["app_password"]:
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("Incorrect password. Please try again.")
 
 
 # ─── Views ───────────────────────────────────────────────────────────────────
@@ -141,7 +252,7 @@ def view_org_chart(remote_path: str, filename: str, label: str):
             mime="text/html",
         )
 
-    st.components.v1.html(html_content, height=800, scrolling=True)
+    st.components.v1.html(html_content, height=900, scrolling=True)
 
 
 # ─── Admin ───────────────────────────────────────────────────────────────────
@@ -195,7 +306,18 @@ def regenerate_from_excel(excel_path: Path):
 
 def admin_panel():
     """Admin panel: download/upload Excel, regenerate, commit to GitHub."""
-    st.subheader("Admin Panel")
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        padding: 1.5rem 2rem; border-radius: 12px; margin-bottom: 1.5rem;
+        color: white;
+    ">
+        <h2 style="font-family: 'Inter', sans-serif; font-size: 22px;
+            font-weight: 700; margin: 0 0 4px 0; color: white;">Admin Panel</h2>
+        <p style="color: #94a3b8; font-size: 14px; margin: 0;">
+            Manage org chart data and regenerate HTML files</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     data_repo = _data_repo()
 
@@ -276,15 +398,29 @@ def main():
         login_form()
         return
 
-    # Sidebar navigation
-    st.sidebar.title("Org Chart")
+    inject_custom_css()
+
+    # Sidebar branding + navigation
+    st.sidebar.markdown("""
+    <div style="text-align: center; padding: 0.5rem 0 1.5rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 1rem;">
+        <div style="font-size: 20px; font-weight: 700; color: #f8fafc;
+            letter-spacing: -0.5px;">
+            &#127970; Org Chart
+        </div>
+        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
+            Organization Viewer</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     view = st.sidebar.radio(
-        "View",
+        "Navigation",
         ["Org Chart (Named)", "Org Chart (Redacted)", "Admin"],
         label_visibility="collapsed",
     )
 
-    if st.sidebar.button("Logout"):
+    st.sidebar.divider()
+    if st.sidebar.button("Sign Out", use_container_width=True):
         st.session_state["authenticated"] = False
         st.rerun()
 
