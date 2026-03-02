@@ -451,18 +451,18 @@ input[type="text"]::placeholder {
     box-shadow: 0 12px 36px rgba(15, 23, 42, 0.25);
     min-width: 280px;
     max-width: 400px;
-    overflow: hidden;
     position: relative;
 }
 .manager-card::after {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -50%;
+    top: 0;
+    right: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    background: radial-gradient(circle at top right, rgba(59,130,246,0.12) 0%, transparent 70%);
     pointer-events: none;
+    border-radius: 16px;
 }
 .manager-card .name {
     font-size: 22px;
