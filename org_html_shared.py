@@ -679,7 +679,7 @@ input[type="text"]::placeholder {
     font-weight: 700;
 }
 .scrum-member a {
-    color: #3182ce;
+    color: var(--org-accent);
     text-decoration: none;
 }
 .scrum-member a:hover {
@@ -857,7 +857,7 @@ th button:focus-visible {
 .list-view tbody tr:nth-child(even) { background: #f9fafb; }
 .list-view tbody tr { transition: background 0.15s ease; }
 .list-view tbody tr:hover { background: #eff6ff; }
-.list-view td a { color: #2563eb; cursor: pointer; text-decoration: none; font-weight: 500; }
+.list-view td a { color: var(--org-accent); cursor: pointer; text-decoration: none; font-weight: 500; }
 .list-view td a:hover { color: #1d4ed8; text-decoration: underline; }
 .list-view .team-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; margin: 1px 3px; text-decoration: none; font-weight: 500; transition: opacity 0.15s ease; }
 .list-view .team-pill:hover { opacity: 0.75; }
@@ -1115,11 +1115,12 @@ function renderHome() {
         const badge = isContractor(dr.employment)
             ? '<span class="badge badge-contractor">Contractor</span>'
             : '<span class="badge badge-fte">FTE</span>';
-        html += '<div class="person-card" onclick="switchToOrgDr(\'' + escHtml(dr.org) + '\',\'' + escHtml(dr.nodeId) + '\')">';
+        var drTheme = ORG_THEMES[dr.org] || ORG_THEMES['__HOME__'];
+        html += '<div class="person-card" style="border-left: 4px solid ' + drTheme.accent + ';" onclick="switchToOrgDr(\'' + escHtml(dr.org) + '\',\'' + escHtml(dr.nodeId) + '\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();switchToOrgDr(\'' + escHtml(dr.org) + '\',\'' + escHtml(dr.nodeId) + '\')}">';
         html += '<div class="name">' + escHtml(displayName(dr.name)) + talentTooltip(dr) + '</div>';
         if (dr.title) html += '<div class="title">' + escHtml(dr.title) + '</div>';
         html += badge;
-        html += '<div class="dr-count" style="color:#3182ce">' + escHtml(dr.org) + '</div>';
+        html += '<div class="dr-count" style="color:' + drTheme.accent + '">' + escHtml(dr.org) + '</div>';
         html += '</div>';
     });
     html += '</div>';
