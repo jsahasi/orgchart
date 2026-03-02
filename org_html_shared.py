@@ -242,6 +242,13 @@ body {
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
 }
+:root {
+    --org-grad-start: #0f172a;
+    --org-grad-end: #1e293b;
+    --org-accent: #3b82f6;
+    --org-tint: #eff6ff;
+    --org-bar-end: #8b5cf6;
+}
 .skip-link {
     position: absolute;
     left: -9999px;
@@ -262,7 +269,7 @@ body {
 
 /* Header */
 .header {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    background: linear-gradient(135deg, var(--org-grad-start) 0%, var(--org-grad-end) 100%);
     color: white;
     padding: 16px 24px;
     display: flex;
@@ -275,6 +282,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: background 0.4s ease;
 }
 
 .header h1 {
@@ -413,12 +421,14 @@ input[type="text"]::placeholder {
     font-size: 13px;
 }
 .breadcrumb a {
-    color: #3182ce;
+    color: var(--org-accent);
     text-decoration: none;
     font-size: 13px;
     cursor: pointer;
 }
 .breadcrumb a:hover {
+    color: var(--org-accent);
+    filter: brightness(0.85);
     text-decoration: underline;
 }
 .breadcrumb .current {
@@ -443,7 +453,7 @@ input[type="text"]::placeholder {
 }
 
 .manager-card {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: linear-gradient(135deg, var(--org-grad-start) 0%, var(--org-grad-end) 100%);
     color: white;
     border-radius: 16px;
     padding: 24px 32px;
@@ -452,6 +462,7 @@ input[type="text"]::placeholder {
     min-width: 280px;
     max-width: 400px;
     position: relative;
+    transition: background 0.4s ease;
 }
 .manager-card::after {
     content: '';
@@ -460,7 +471,7 @@ input[type="text"]::placeholder {
     right: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at top right, rgba(59,130,246,0.12) 0%, transparent 70%);
+    background: radial-gradient(circle at top right, rgba(255,255,255,0.06) 0%, transparent 70%);
     pointer-events: none;
     border-radius: 16px;
 }
@@ -557,7 +568,7 @@ input[type="text"]::placeholder {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    background: linear-gradient(90deg, var(--org-accent), var(--org-bar-end));
     opacity: 0;
     transition: opacity 0.2s;
 }
@@ -567,7 +578,7 @@ input[type="text"]::placeholder {
 .person-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 28px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
-    border-color: #3b82f6;
+    border-color: var(--org-accent);
 }
 .person-card .name {
     font-size: 15px;
@@ -1000,6 +1011,25 @@ function teamPillTextColor(name) {
     return darkMap[base] || base;
 }
 
+const ORG_THEMES = {
+    '__HOME__':       {start:'#0f172a',end:'#1e293b',accent:'#3b82f6',tint:'#eff6ff',barEnd:'#8b5cf6'},
+    'Product-Design': {start:'#7c2d12',end:'#c2410c',accent:'#f97316',tint:'#fff7ed',barEnd:'#fbbf24'},
+    'Full QA Org':    {start:'#134e4a',end:'#0f766e',accent:'#14b8a6',tint:'#f0fdfa',barEnd:'#06b6d4'},
+    'Full Dev Org':   {start:'#312e81',end:'#4338ca',accent:'#6366f1',tint:'#eef2ff',barEnd:'#a78bfa'},
+    'Salesforce':     {start:'#14532d',end:'#15803d',accent:'#22c55e',tint:'#f0fdf4',barEnd:'#4ade80'},
+    'TPM':            {start:'#881337',end:'#be123c',accent:'#f43f5e',tint:'#fff1f2',barEnd:'#fb923c'},
+};
+
+function applyOrgTheme(orgName) {
+    var theme = ORG_THEMES[orgName] || ORG_THEMES['__HOME__'];
+    var s = document.documentElement.style;
+    s.setProperty('--org-grad-start', theme.start);
+    s.setProperty('--org-grad-end', theme.end);
+    s.setProperty('--org-accent', theme.accent);
+    s.setProperty('--org-tint', theme.tint);
+    s.setProperty('--org-bar-end', theme.barEnd);
+}
+
 function escHtml(s) {
     if (!s) return '';
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1032,12 +1062,14 @@ function init() {
         opt.textContent = name;
         sel.appendChild(opt);
     });
+    applyOrgTheme('__HOME__');
     goHome();
 }
 
 function switchOrg(orgName) {
     if (orgName === '__HOME__') { goHome(); return; }
     state.currentOrg = orgName;
+    applyOrgTheme(orgName);
     state.scrumView = null;
     state.listView = false;
     state.allScrumView = false;
@@ -1047,6 +1079,7 @@ function switchOrg(orgName) {
 
 function goHome() {
     state.isHome = true;
+    applyOrgTheme('__HOME__');
     state.scrumView = null;
     state.listView = false;
     state.allScrumView = false;
@@ -1112,6 +1145,7 @@ function renderHome() {
 function switchToOrgDr(orgName, nodeId) {
     state.isHome = false;
     state.currentOrg = orgName;
+    applyOrgTheme(orgName);
     document.getElementById('orgSelect').value = orgName;
     navigateTo(nodeId);
 }
@@ -1218,6 +1252,7 @@ function doSearch() {
 // ── Scrum View ──
 function showScrumView(teamName) {
     state.scrumView = teamName;
+    applyOrgTheme(state.currentOrg || '__HOME__');
     state.allScrumView = false;
     state.listView = false;
     state.lastOrgNodeId = state.currentNodeId;
@@ -1291,6 +1326,7 @@ function renderScrum(teamName) {
 
 // ── All-Scrum View ──
 function showAllScrumView() {
+    applyOrgTheme('__HOME__');
     state.allScrumView = true;
     state.scrumView = null;
     state.listView = false;
