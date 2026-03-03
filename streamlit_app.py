@@ -264,7 +264,7 @@ def regenerate_from_excel(excel_path: Path):
     """
     try:
         people = parse_people(excel_path)
-        scrum_sheet = parse_scrum_teams(excel_path)
+        scrum_sheet, scrum_meta = parse_scrum_teams(excel_path)
         org_datasets = build_org_datasets(people)
         scrum_teams = build_scrum_data(people, scrum_sheet, org_datasets)
         home_drs = build_home_drs(org_datasets)
@@ -279,6 +279,7 @@ def regenerate_from_excel(excel_path: Path):
                 for org_name, ds in org_datasets.items()
             },
             "scrum": scrum_teams,
+            "scrumMeta": scrum_meta,
             "homeDrs": home_drs,
             "missing": {},
         }

@@ -190,6 +190,14 @@ def redact_data(data, all_names):
         if dr.get("rationale"):
             dr["rationale"] = redact_rationale(dr["rationale"])
 
+    # Redact scrumMeta: SM/PO names (may contain "Name1 / Name2")
+    for team_name, meta in data.get("scrumMeta", {}).items():
+        for key in ("scrumMaster", "productOwner"):
+            if meta.get(key):
+                meta[key] = " / ".join(
+                    get_redacted(n.strip()) for n in meta[key].split("/")
+                )
+
     return data
 
 
@@ -644,8 +652,37 @@ input[type="text"]::placeholder {
     font-size: 24px;
     font-weight: 700;
     color: #0f172a;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     letter-spacing: -0.5px;
+}
+.scrum-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--org-tint, #f8fafc);
+    border-radius: 10px;
+    border-left: 3px solid var(--org-accent, #3b82f6);
+}
+.scrum-meta-item { font-size: 13.5px; color: #334155; }
+.scrum-meta-label {
+    font-weight: 600;
+    color: #64748b;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 2px;
+}
+.all-scrum-card-meta {
+    padding: 6px 16px 8px;
+    font-size: 11.5px;
+    color: #64748b;
+    border-bottom: 1px solid #e8ecf1;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 .discipline-section {
     margin-bottom: 24px;
@@ -1283,6 +1320,14 @@ function renderScrum(teamName) {
     let html = '<div class="scrum-view">';
     html += '<div class="scrum-header">#' + escHtml(teamName) + '</div>';
 
+    var meta = DATA.scrumMeta && DATA.scrumMeta[teamName];
+    if (meta && (meta.productOwner || meta.scrumMaster)) {
+        html += '<div class="scrum-meta">';
+        if (meta.productOwner) html += '<span class="scrum-meta-item"><span class="scrum-meta-label">Product Owner</span>' + escHtml(displayName(meta.productOwner)) + '</span>';
+        if (meta.scrumMaster) html += '<span class="scrum-meta-item"><span class="scrum-meta-label">Scrum Master</span>' + escHtml(displayName(meta.scrumMaster)) + '</span>';
+        html += '</div>';
+    }
+
     const disciplineOrder = ['Dev', 'Product', 'QA', 'TPM', 'Other'];
     const disciplineLabels = {
         'Dev': 'Development',
@@ -1381,9 +1426,19 @@ function showAllScrumView() {
             });
         });
 
+        var cardMeta = DATA.scrumMeta && DATA.scrumMeta[teamName];
+        var cardMetaHtml = '';
+        if (cardMeta && (cardMeta.productOwner || cardMeta.scrumMaster)) {
+            cardMetaHtml = '<div class="all-scrum-card-meta">';
+            if (cardMeta.productOwner) cardMetaHtml += '<span>PO: ' + escHtml(displayName(cardMeta.productOwner)) + '</span>';
+            if (cardMeta.scrumMaster) cardMetaHtml += '<span>SM: ' + escHtml(displayName(cardMeta.scrumMaster)) + '</span>';
+            cardMetaHtml += '</div>';
+        }
+
         gridHtml += '<div class="all-scrum-card" role="button" tabindex="0" onclick="showScrumView(\'' + escHtml(teamName) + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();showScrumView(\'' + escHtml(teamName) + '\')}">'
             + '<div class="all-scrum-card-header">' + escHtml(teamName)
             + ' <span class="count-badge">' + totalMembers + '</span></div>'
+            + cardMetaHtml
             + '<div class="all-scrum-card-body">' + bodyHtml + '</div>'
             + '</div>';
     });

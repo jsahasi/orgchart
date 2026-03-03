@@ -94,7 +94,9 @@ def parse_people(filepath):
 
 def parse_scrum_teams(filepath):
     """Read the Scrum Teams sheet.
-    Returns {team_name: {discipline: [{name, isLead}]}}.
+    Returns (teams_dict, meta_dict) where:
+      teams_dict = {team_name: {discipline: [{name, isLead}]}}
+      meta_dict  = {team_name: {"scrumMaster": str, "productOwner": str}}
     """
     wb = openpyxl.load_workbook(filepath, read_only=True, data_only=True)
     ws = wb["Scrum Teams"]
@@ -103,6 +105,7 @@ def parse_scrum_teams(filepath):
     col = {h: i for i, h in enumerate(headers) if h}
 
     teams = defaultdict(lambda: defaultdict(list))
+    meta = {}
     for row in ws.iter_rows(min_row=2, values_only=True):
         team = row[col["Team Name"]]
         member = row[col["Member Name"]]
@@ -119,8 +122,16 @@ def parse_scrum_teams(filepath):
             "isLead": is_lead,
         })
 
+        # Capture team-level SM/PO metadata (first non-empty value wins)
+        if team not in meta:
+            po_col = col.get("Product Owner")
+            sm_col = col.get("Scrum Master")
+            po = (str(row[po_col]).strip() if po_col is not None and row[po_col] else "")
+            sm = (str(row[sm_col]).strip() if sm_col is not None and row[sm_col] else "")
+            meta[team] = {"productOwner": po, "scrumMaster": sm}
+
     wb.close()
-    return dict(teams)
+    return dict(teams), meta
 
 
 # ─── Step 3: Build org datasets ─────────────────────────────────────────────
@@ -321,8 +332,11 @@ def main():
 
     # Step 2: Parse Scrum Teams
     print("\n[2] Parsing Scrum Teams sheet...")
-    scrum_sheet = parse_scrum_teams(MASTER_FILE)
+    scrum_sheet, scrum_meta = parse_scrum_teams(MASTER_FILE)
     print(f"  {len(scrum_sheet)} teams loaded")
+    meta_with_po = sum(1 for m in scrum_meta.values() if m.get("productOwner"))
+    meta_with_sm = sum(1 for m in scrum_meta.values() if m.get("scrumMaster"))
+    print(f"  {meta_with_po} teams with Product Owner, {meta_with_sm} with Scrum Master")
 
     # Step 3: Build org datasets
     print("\n[3] Building org datasets...")
@@ -355,6 +369,7 @@ def main():
             for org_name, ds in org_datasets.items()
         },
         "scrum": scrum_teams,
+        "scrumMeta": scrum_meta,
         "homeDrs": home_drs,
         "missing": {},
     }

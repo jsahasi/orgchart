@@ -51,7 +51,7 @@ streamlit run streamlit_app.py
 | Source | What it provides |
 |--------|-----------------|
 | `data/orgchart_master_data.xlsx` (People sheet) | All people with names, titles, employment, org, reports-to, scrum teams, talent data |
-| `data/orgchart_master_data.xlsx` (Scrum Teams sheet) | Team membership with discipline and lead flags |
+| `data/orgchart_master_data.xlsx` (Scrum Teams sheet) | Team membership with discipline, lead flags, Product Owner, Scrum Master |
 | `data/orgchart_master_data.xlsx` (Teams Hierarchy sheet) | Team → Dev Lead, QA Lead, Director mappings |
 
 ### Legacy Sources (in `data/legacy/`)
@@ -85,7 +85,7 @@ Kamal Ghosh, Vice President Engineering. **Reports directly to Jayesh** (per on2
 ### QA Hierarchy
 Automation contractors report to Ashish Oza (contractor) → Oleg. Oleg's real DRs: Rumana, Shefali, Jenny, Ashish.
 
-### Canonical Scrum Team Names (20 teams)
+### Canonical Scrum Team Names (21 teams)
 Source: `JayeshSahasi_SCRUMS.xlsx` "Team Reorg" tab. Aliases mapped via `TEAM_ALIASES`:
 - Integration → Integrations, GoLive → Go Live, Video → Vids
 - Segmentation → dropped entirely (not staffed)
@@ -95,6 +95,13 @@ Source: `JayeshSahasi_SCRUMS.xlsx` "Team Reorg" tab. Aliases mapped via `TEAM_AL
 `JayeshSahasi_SCRUMS.xlsx` "Teams Hierachy" sheet maps each team to Dev Lead, QA Lead, Director. Used to:
 - Place contractors under the correct lead
 - Identify leads in scrum team views (`isLead` flag)
+
+### Scrum Master & Product Owner
+Each scrum team has optional SM and PO fields stored in the "Scrum Teams" sheet (`Scrum Master`, `Product Owner` columns). These are team-level metadata (same value per team, not per member). Stored in `DATA.scrumMeta` as a separate top-level key:
+```json
+{"scrumMeta": {"Analytics": {"scrumMaster": "Kashan Babar", "productOwner": "Jared Chappin"}, ...}}
+```
+Dual assignments use slash notation (e.g., "Salma Bargach / Kevin Miller"). Redaction splits on `/` and redacts each name independently. Displayed below the team header in scrum view and compactly on all-scrum cards.
 
 ### Default Titles by Org
 | Org | Default Title |
@@ -124,7 +131,7 @@ Skip rows at bottom of sheets that are audit/changelog entries via `CHANGELOG_SK
 ## Views
 - **Home view**: Jayesh + 6 DRs across 5 orgs, deduplicated headcount
 - **Org drilldown**: Hierarchical card view with drill-in navigation
-- **Scrum team view**: Team composition grouped by discipline, with lead identification
+- **Scrum team view**: Team composition grouped by discipline, with lead identification, Product Owner, and Scrum Master
 - **List view**: Flat sortable table of all people (Name, Title, Type, Manager, Org, Scrum Teams). Clickable names navigate to org cards; clickable scrum team pills navigate to scrum view. Headcount deduplicated across orgs in Home list view.
 - **Talent info tooltip**: "i" icon next to names of people who have talent snapshot data. Hover shows Talent Band, Talent Category, and Rationale. Present in all views (home, org drilldown, scrum, list). Rationale text in redacted version has names scrubbed.
 

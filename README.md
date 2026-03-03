@@ -44,7 +44,7 @@ Configure `.streamlit/secrets.toml` with passwords and GitHub token.
 ## Features
 
 - **Org drilldown** — hierarchical card view with drill-in navigation across 5 orgs
-- **Scrum team view** — team composition grouped by discipline with lead identification
+- **Scrum team view** — team composition grouped by discipline with lead identification, Product Owner, and Scrum Master
 - **List view** — flat sortable table with clickable navigation
 - **FTE/Contractor toggles** — show/hide employees or contractors across all views
 - **Search** — find people by name across all orgs
