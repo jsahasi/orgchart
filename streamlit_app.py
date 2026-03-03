@@ -402,7 +402,21 @@ def main():
 
     inject_custom_css()
 
-    # Sidebar branding + navigation
+    # Top-level tab navigation
+    tab_named, tab_redacted, tab_admin = st.tabs(
+        ["Org Chart (Named)", "Org Chart (Redacted)", "Admin"]
+    )
+
+    with tab_named:
+        view_org_chart("org_drilldown.html", "org_drilldown.html", "Org Chart")
+
+    with tab_redacted:
+        view_org_chart("org_drilldown_redacted.html", "org_drilldown_redacted.html", "Org Chart (Redacted)")
+
+    with tab_admin:
+        admin_panel()
+
+    # Sidebar: sign out only
     st.sidebar.markdown("""
     <div style="text-align: center; padding: 0.5rem 0 1.5rem 0;
         border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 1rem;">
@@ -410,28 +424,11 @@ def main():
             letter-spacing: -0.5px;">
             &#127970; Org Chart
         </div>
-        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
-            Organization Viewer</div>
     </div>
     """, unsafe_allow_html=True)
-
-    view = st.sidebar.radio(
-        "Navigation",
-        ["Org Chart (Named)", "Org Chart (Redacted)", "Admin"],
-        label_visibility="collapsed",
-    )
-
-    st.sidebar.divider()
     if st.sidebar.button("Sign Out", use_container_width=True):
         st.session_state["authenticated"] = False
         st.rerun()
-
-    if view == "Org Chart (Named)":
-        view_org_chart("org_drilldown.html", "org_drilldown.html", "Org Chart")
-    elif view == "Org Chart (Redacted)":
-        view_org_chart("org_drilldown_redacted.html", "org_drilldown_redacted.html", "Org Chart (Redacted)")
-    elif view == "Admin":
-        admin_panel()
 
 
 if __name__ == "__main__":
