@@ -50,10 +50,16 @@ def inject_custom_css():
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-    /* Hide default Streamlit branding */
+    /* Hide default Streamlit branding and remove top padding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header[data-testid="stHeader"] {display: none;}
+    .stAppViewBlockContainer, [data-testid="stAppViewBlockContainer"] {
+        padding-top: 1rem !important;
+    }
+    .block-container {
+        padding-top: 1rem !important;
+    }
 
     /* Global typography */
     html, body, [class*="css"] {
