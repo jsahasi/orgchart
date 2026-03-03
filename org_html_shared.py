@@ -663,7 +663,8 @@ input[type="text"]::placeholder {
     letter-spacing: 1px;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #f1f5f9;
+    border-bottom: 2px solid var(--org-accent, #3b82f6);
+    opacity: 0.85;
 }
 .scrum-member {
     display: flex;
@@ -722,7 +723,7 @@ input[type="text"]::placeholder {
 }
 .all-scrum-card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.14);
-    border-color: #3b82f6;
+    border-color: var(--org-accent, #3b82f6);
 }
 .all-scrum-card-header {
     padding: 14px 16px;
@@ -1373,8 +1374,9 @@ function showAllScrumView() {
                 const badge = isContractor(m.employment)
                     ? '<span class="badge badge-contractor" style="font-size:10px;padding:1px 5px">C</span>'
                     : '';
+                var memTheme = ORG_THEMES[m.org] || ORG_THEMES['__HOME__'];
                 bodyHtml += '<div class="member-row' + (isLead ? ' is-lead' : '') + '">'
-                    + '<span>' + escHtml(displayName(m.name)) + leadTag + '</span> ' + badge
+                    + '<span style="color:' + memTheme.accent + '">' + escHtml(displayName(m.name)) + leadTag + '</span> ' + badge
                     + '</div>';
             });
         });
