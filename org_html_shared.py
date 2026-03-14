@@ -1601,6 +1601,7 @@ function renderListTable(rows) {
         {key: 'manager', label: 'Manager'},
         {key: 'org', label: 'Org'},
         {key: 'scrumTeams', label: 'Scrum Teams'},
+        {key: 'talentCategory', label: 'Rating'},
     ];
     var html = '<div class="list-view"><table><thead><tr>';
     cols.forEach(function(c) {
@@ -1635,6 +1636,7 @@ function renderListTable(rows) {
             });
         }
         html += '</td>';
+        html += '<td>' + escHtml(r.talentCategory) + '</td>';
         html += '</tr>';
     });
     html += '</tbody></table></div>';

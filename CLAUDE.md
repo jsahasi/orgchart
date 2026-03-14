@@ -132,8 +132,18 @@ Skip rows at bottom of sheets that are audit/changelog entries via `CHANGELOG_SK
 - **Home view**: Jayesh + 6 DRs across 5 orgs, deduplicated headcount
 - **Org drilldown**: Hierarchical card view with drill-in navigation
 - **Scrum team view**: Team composition grouped by discipline, with lead identification, Product Owner, and Scrum Master
-- **List view**: Flat sortable table of all people (Name, Title, Type, Manager, Org, Scrum Teams). Clickable names navigate to org cards; clickable scrum team pills navigate to scrum view. Headcount deduplicated across orgs in Home list view.
+- **List view**: Flat sortable table of all people (Name, Title, Type, Manager, Org, Scrum Teams, Rating). Clickable names navigate to org cards; clickable scrum team pills navigate to scrum view. Headcount deduplicated across orgs in Home list view.
 - **Talent info tooltip**: "i" icon next to names of people who have talent snapshot data. Hover shows Talent Band, Talent Category, and Rationale. Present in all views (home, org drilldown, scrum, list). Rationale text in redacted version has names scrubbed.
+
+### Cvent Talent Category (Rating)
+The "Cvent Talent Category" column in the master Excel maps the legacy talent categories to Cvent's standardized evaluation scale. The generator reads this column (not the old "Talent Category") for the `talentCategory` field in the HTML output. Mapping from legacy:
+| Legacy | Cvent Rating |
+|--------|-------------|
+| 2 - Solid Contributor | 3.5 - Consistently Meets Expectations |
+| 3 - Strong Performer | 4.5 - Consistently Exceeds Expectations |
+| 4 - Top Talent / High Impact | 5.0 - Exceptional Performance |
+
+Full Cvent scale: 1.0 (Unsatisfactory), 2.0 (Improvement Needed), 2.5 (Inconsistent Performance), 3.0 (Mostly Meets Expectations), 3.5 (Consistently Meets Expectations), 4.0 (Mostly Exceeds Expectations), 4.5 (Consistently Exceeds Expectations), 5.0 (Exceptional Performance).
 
 ## Redacted Version
 - All names → "J████ S█████" format (initial visible, remaining letters blacked out with U+2588)

@@ -82,7 +82,7 @@ def parse_people(filepath):
             "scrumTeams": scrum_teams,
             "location": (row[col.get("Location", -1)] or "").strip() if col.get("Location") is not None and row[col["Location"]] else "",
             "talentBand": (row[col.get("Talent Band", -1)] or "").strip() if col.get("Talent Band") is not None and row[col["Talent Band"]] else "",
-            "talentCategory": (row[col.get("Talent Category", -1)] or "").strip() if col.get("Talent Category") is not None and row[col["Talent Category"]] else "",
+            "talentCategory": (row[col.get("Cvent Talent Category", -1)] or "").strip() if col.get("Cvent Talent Category") is not None and row[col["Cvent Talent Category"]] else "",
             "rationale": (row[col.get("Rationale", -1)] or "").strip() if col.get("Rationale") is not None and row[col["Rationale"]] else "",
         }
 
