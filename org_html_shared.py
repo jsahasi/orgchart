@@ -902,6 +902,9 @@ th button:focus-visible {
 .list-view .badge { font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: 600; }
 .list-view .badge-fte { background: #dbeafe; color: #1e40af; }
 .list-view .badge-contractor { background: #fef3c7; color: #92400e; }
+.list-view .rank-high { background: #dcfce7; color: #166534; }
+.list-view .rank-med { background: #fef9c3; color: #854d0e; }
+.list-view .rank-low { background: #fee2e2; color: #991b1b; }
 
 /* Headcount bar */
 .headcount {
@@ -1534,6 +1537,43 @@ function initAllScrumPanZoom() {
 }
 
 // ── List View ──
+function getStackRank(talentCategory) {
+    if (!talentCategory) return '';
+    var match = talentCategory.match(/^([\d.]+)/);
+    if (!match) return '';
+    var rating = parseFloat(match[1]);
+    if (rating >= 4) return 'H';
+    if (rating >= 3) return 'M';
+    return 'L';
+}
+
+function exportListToExcel() {
+    var rows = collectListRows();
+    rows = sortListRows(rows);
+    var headers = ['Name', 'Title', 'Type', 'Manager', 'Org', 'Scrum Teams', 'Rating', 'Stack Rank'];
+    var csvRows = [headers.join(',')];
+    rows.forEach(function(r) {
+        var name = displayName(r.name).replace(/"/g, '""');
+        var title = (r.title || '').replace(/"/g, '""');
+        var manager = displayName(r.manager).replace(/"/g, '""');
+        var teams = (r.scrumTeams || []).join('; ');
+        var rating = (r.talentCategory || '').replace(/"/g, '""');
+        var stackRank = getStackRank(r.talentCategory);
+        csvRows.push('"' + name + '","' + title + '","' + r.type + '","' + manager + '","' + r.org + '","' + teams + '","' + rating + '","' + stackRank + '"');
+    });
+    var csv = csvRows.join('\n');
+    var blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    var label = state.isHome ? 'All_Orgs' : state.currentOrg.replace(/\s+/g, '_');
+    a.download = 'orgchart_list_' + label + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
 function collectListRows() {
     var rows = [];
     var seen = {};
@@ -1574,6 +1614,7 @@ function collectListRows() {
                 talentBand: node.talentBand || '',
                 talentCategory: node.talentCategory || '',
                 rationale: node.rationale || '',
+                stackRank: getStackRank(node.talentCategory || ''),
             });
         }
     });
@@ -1602,6 +1643,7 @@ function renderListTable(rows) {
         {key: 'org', label: 'Org'},
         {key: 'scrumTeams', label: 'Scrum Teams'},
         {key: 'talentCategory', label: 'Rating'},
+        {key: 'stackRank', label: 'Stack Rank'},
     ];
     var html = '<div class="list-view"><table><thead><tr>';
     cols.forEach(function(c) {
@@ -1637,6 +1679,8 @@ function renderListTable(rows) {
         }
         html += '</td>';
         html += '<td>' + escHtml(r.talentCategory) + '</td>';
+        var rankCls = r.stackRank === 'H' ? 'rank-high' : r.stackRank === 'M' ? 'rank-med' : r.stackRank === 'L' ? 'rank-low' : '';
+        html += '<td>' + (r.stackRank ? '<span class="badge ' + rankCls + '">' + r.stackRank + '</span>' : '') + '</td>';
         html += '</tr>';
     });
     html += '</tbody></table></div>';
@@ -1659,7 +1703,8 @@ function renderList() {
     var bc = document.getElementById('breadcrumb');
     bc.innerHTML = '<span class="current">List — ' + escHtml(label) + ' (' + rows.length + ')</span>';
 
-    document.getElementById('mainContent').innerHTML = renderListTable(rows);
+    var exportBtn = '<div style="text-align:right;margin-bottom:10px"><button onclick="exportListToExcel()" style="padding:6px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;font-size:14px;color:#374151">&#128229; Export to Excel</button></div>';
+    document.getElementById('mainContent').innerHTML = exportBtn + renderListTable(rows);
     document.getElementById('mainContent').focus();
 
     // Update headcount
