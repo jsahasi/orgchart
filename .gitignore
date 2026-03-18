@@ -12,4 +12,4 @@ decode_script.py
 write_script.py
 write_verify.py
 test*.py
-data/-.xlsx
+data/
