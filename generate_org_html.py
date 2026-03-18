@@ -73,6 +73,19 @@ def parse_people(filepath):
         scrum_raw = row[col.get("Scrum Teams", -1)] if "Scrum Teams" in col else ""
         scrum_teams = [t.strip() for t in (scrum_raw or "").split(";") if t.strip()]
 
+        # Start Date: may be a datetime object from openpyxl
+        sd_raw = row[col["Start Date"]] if col.get("Start Date") is not None else None
+        if hasattr(sd_raw, "strftime"):
+            start_date = sd_raw.strftime("%Y-%m-%d")
+        elif sd_raw:
+            start_date = str(sd_raw).strip()
+        else:
+            start_date = ""
+
+        # Contractor Number: may be an integer
+        cn_raw = row[col["Contractor Number"]] if col.get("Contractor Number") is not None else None
+        contractor_number = int(cn_raw) if isinstance(cn_raw, (int, float)) and cn_raw else (str(cn_raw).strip() if cn_raw else "")
+
         people[norm] = {
             "name": name,
             "title": (row[col["Title"]] or "").strip() if row[col["Title"]] else "",
@@ -84,6 +97,10 @@ def parse_people(filepath):
             "talentBand": (row[col.get("Talent Band", -1)] or "").strip() if col.get("Talent Band") is not None and row[col["Talent Band"]] else "",
             "talentCategory": (row[col.get("Cvent Talent Category", -1)] or "").strip() if col.get("Cvent Talent Category") is not None and row[col["Cvent Talent Category"]] else "",
             "rationale": (row[col.get("Rationale", -1)] or "").strip() if col.get("Rationale") is not None and row[col["Rationale"]] else "",
+            "stackRank": (row[col.get("Stack Rank", -1)] or "").strip() if col.get("Stack Rank") is not None and row[col["Stack Rank"]] else "",
+            "contractorNumber": contractor_number,
+            "supplier": (row[col.get("Supplier", -1)] or "").strip() if col.get("Supplier") is not None and row[col["Supplier"]] else "",
+            "startDate": start_date,
         }
 
     wb.close()
@@ -203,6 +220,10 @@ def build_org_datasets(people):
                 "talentBand": person["talentBand"],
                 "talentCategory": person["talentCategory"],
                 "rationale": person["rationale"],
+                "stackRank": person["stackRank"],
+                "contractorNumber": person["contractorNumber"],
+                "supplier": person["supplier"],
+                "startDate": person["startDate"],
             }
 
         # Build children map for this org (only nodes within this org)
@@ -268,6 +289,10 @@ def build_scrum_data(people, scrum_sheet, org_datasets):
                     "talentBand": person.get("talentBand", ""),
                     "talentCategory": person.get("talentCategory", ""),
                     "rationale": person.get("rationale", ""),
+                    "stackRank": person.get("stackRank", ""),
+                    "contractorNumber": person.get("contractorNumber", ""),
+                    "supplier": person.get("supplier", ""),
+                    "startDate": person.get("startDate", ""),
                 })
             # Sort: leads first, then by seniority, then alphabetically
             member_objs.sort(key=lambda x: (

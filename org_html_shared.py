@@ -1550,7 +1550,7 @@ function getStackRank(talentCategory) {
 function exportListToExcel() {
     var rows = collectListRows();
     rows = sortListRows(rows);
-    var headers = ['Name', 'Title', 'Type', 'Manager', 'Org', 'Scrum Teams', 'Rating', 'Stack Rank'];
+    var headers = ['Name', 'Title', 'Type', 'Manager', 'Org', 'Scrum Teams', 'Rating', 'Stack Rank', 'Supplier', '#', 'Start Date'];
     var csvRows = [headers.join(',')];
     rows.forEach(function(r) {
         var name = displayName(r.name).replace(/"/g, '""');
@@ -1558,8 +1558,11 @@ function exportListToExcel() {
         var manager = displayName(r.manager).replace(/"/g, '""');
         var teams = (r.scrumTeams || []).join('; ');
         var rating = (r.talentCategory || '').replace(/"/g, '""');
-        var stackRank = getStackRank(r.talentCategory);
-        csvRows.push('"' + name + '","' + title + '","' + r.type + '","' + manager + '","' + r.org + '","' + teams + '","' + rating + '","' + stackRank + '"');
+        var stackRank = r.stackRank || getStackRank(r.talentCategory);
+        var supplier = (r.supplier || '').replace(/"/g, '""');
+        var num = r.contractorNumber ? String(r.contractorNumber) : '';
+        var startDate = r.startDate || '';
+        csvRows.push('"' + name + '","' + title + '","' + r.type + '","' + manager + '","' + r.org + '","' + teams + '","' + rating + '","' + stackRank + '","' + supplier + '","' + num + '","' + startDate + '"');
     });
     var csv = csvRows.join('\n');
     var blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
@@ -1614,7 +1617,10 @@ function collectListRows() {
                 talentBand: node.talentBand || '',
                 talentCategory: node.talentCategory || '',
                 rationale: node.rationale || '',
-                stackRank: getStackRank(node.talentCategory || ''),
+                stackRank: node.stackRank || getStackRank(node.talentCategory || ''),
+                supplier: node.supplier || '',
+                contractorNumber: node.contractorNumber || '',
+                startDate: node.startDate || '',
             });
         }
     });
@@ -1644,6 +1650,9 @@ function renderListTable(rows) {
         {key: 'scrumTeams', label: 'Scrum Teams'},
         {key: 'talentCategory', label: 'Rating'},
         {key: 'stackRank', label: 'Stack Rank'},
+        {key: 'supplier', label: 'Supplier'},
+        {key: 'contractorNumber', label: '#'},
+        {key: 'startDate', label: 'Start Date'},
     ];
     var html = '<div class="list-view"><table><thead><tr>';
     cols.forEach(function(c) {
@@ -1681,6 +1690,9 @@ function renderListTable(rows) {
         html += '<td>' + escHtml(r.talentCategory) + '</td>';
         var rankCls = r.stackRank === 'H' ? 'rank-high' : r.stackRank === 'M' ? 'rank-med' : r.stackRank === 'L' ? 'rank-low' : '';
         html += '<td>' + (r.stackRank ? '<span class="badge ' + rankCls + '">' + r.stackRank + '</span>' : '') + '</td>';
+        html += '<td>' + escHtml(r.supplier) + '</td>';
+        html += '<td>' + (r.contractorNumber ? escHtml(String(r.contractorNumber)) : '') + '</td>';
+        html += '<td>' + escHtml(r.startDate) + '</td>';
         html += '</tr>';
     });
     html += '</tbody></table></div>';
