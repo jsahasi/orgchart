@@ -143,7 +143,7 @@ def redact_data(data, all_names):
                         result = part_pattern.sub(get_redacted(part), result)
         return result
 
-    # Redact org nodes: names, dottedLine, rationale, and IDs
+    # Redact org nodes: names, dottedLine, rationale, email, and IDs
     for tab_name, org in data["orgs"].items():
         # Remap top
         org["top"] = get_anon_id(org["top"])
@@ -156,6 +156,8 @@ def redact_data(data, all_names):
                 node["dottedLine"] = get_redacted(node["dottedLine"])
             if node.get("rationale"):
                 node["rationale"] = redact_rationale(node["rationale"])
+            if "email" in node:
+                node["email"] = ""
             new_id = get_anon_id(nid)
             node["id"] = new_id
             new_nodes[new_id] = node
@@ -168,7 +170,7 @@ def redact_data(data, all_names):
             new_children[new_parent] = [get_anon_id(c) for c in child_ids]
         org["children"] = new_children
 
-    # Redact scrum members: names, IDs, and rationale
+    # Redact scrum members: names, IDs, rationale, email
     for team_name, groups in data["scrum"].items():
         for discipline, members in groups.items():
             for m in members:
@@ -177,18 +179,22 @@ def redact_data(data, all_names):
                     m["id"] = get_anon_id(m["id"])
                 if m.get("rationale"):
                     m["rationale"] = redact_rationale(m["rationale"])
+                if "email" in m:
+                    m["email"] = ""
 
     # Redact missing titles lists
     for tab_name, names in data["missing"].items():
         data["missing"][tab_name] = [get_redacted(n) for n in names]
 
-    # Redact homeDrs: names, nodeIds, and rationale
+    # Redact homeDrs: names, nodeIds, rationale, email
     for dr in data.get("homeDrs", []):
         dr["name"] = get_redacted(dr["name"])
         if "nodeId" in dr:
             dr["nodeId"] = get_anon_id(dr["nodeId"])
         if dr.get("rationale"):
             dr["rationale"] = redact_rationale(dr["rationale"])
+        if "email" in dr:
+            dr["email"] = ""
 
     # Redact scrumMeta: SM/PO names (may contain "Name1 / Name2")
     for team_name, meta in data.get("scrumMeta", {}).items():
@@ -197,6 +203,38 @@ def redact_data(data, all_names):
                 meta[key] = " / ".join(
                     get_redacted(n.strip()) for n in meta[key].split("/")
                 )
+
+    return data
+
+
+RATING_FIELDS = ("talentBand", "talentCategory", "rationale", "stackRank")
+
+
+def strip_ratings(data):
+    """Deep copy and clear per-person rating/talent fields.
+
+    Produces an unredacted dataset (real names intact) with the individual
+    talent/performance data removed: talentBand, talentCategory, rationale,
+    stackRank on every org node, scrum member, and homeDr entry.
+    """
+    data = copy.deepcopy(data)
+
+    def clear(obj):
+        for field in RATING_FIELDS:
+            if field in obj:
+                obj[field] = ""
+
+    for org in data.get("orgs", {}).values():
+        for node in org.get("nodes", {}).values():
+            clear(node)
+
+    for groups in data.get("scrum", {}).values():
+        for members in groups.values():
+            for m in members:
+                clear(m)
+
+    for dr in data.get("homeDrs", []):
+        clear(dr)
 
     return data
 
@@ -923,6 +961,8 @@ th button:focus-visible {
 .talent-tip .tip-label { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 .talent-tip .tip-value { margin-bottom: 8px; }
 .talent-tip .tip-value:last-child { margin-bottom: 0; }
+.talent-tip a { color: #7dd3fc; text-decoration: underline; }
+.talent-tip a:hover { color: #bae6fd; }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -1077,13 +1117,14 @@ function escHtml(s) {
 }
 
 function talentTooltip(node) {
-    if (!node.talentBand && !node.talentCategory && !node.rationale) return '';
+    if (!node.talentBand && !node.talentCategory && !node.rationale && !node.email) return '';
     var html = '<span class="talent-info" tabindex="0">';
     html += '<span class="info-icon" role="img" aria-label="Talent information">i</span>';
     html += '<span class="talent-tip">';
     if (node.talentBand) html += '<div class="tip-label">Band</div><div class="tip-value">' + escHtml(node.talentBand) + '</div>';
     if (node.talentCategory) html += '<div class="tip-label">Category</div><div class="tip-value">' + escHtml(node.talentCategory) + '</div>';
     if (node.rationale) html += '<div class="tip-label">Rationale</div><div class="tip-value">' + escHtml(node.rationale) + '</div>';
+    if (node.email) html += '<div class="tip-label">Email</div><div class="tip-value"><a href="mailto:' + escHtml(node.email) + '" onclick="event.stopPropagation()">' + escHtml(node.email) + '</a></div>';
     html += '</span></span>';
     return html;
 }
@@ -1550,7 +1591,7 @@ function getStackRank(talentCategory) {
 function exportListToExcel() {
     var rows = collectListRows();
     rows = sortListRows(rows);
-    var headers = ['Name', 'Title', 'Type', 'Manager', 'Org', 'Scrum Teams', 'Rating', 'Stack Rank', 'Supplier', '#', 'Start Date'];
+    var headers = ['Name', 'Title', 'Type', 'Manager', 'Org', 'Scrum Teams', 'Rating', 'Stack Rank', 'Supplier', '#', 'Start Date', 'Email'];
     var csvRows = [headers.join(',')];
     rows.forEach(function(r) {
         var name = displayName(r.name).replace(/"/g, '""');
@@ -1562,7 +1603,8 @@ function exportListToExcel() {
         var supplier = (r.supplier || '').replace(/"/g, '""');
         var num = r.contractorNumber ? String(r.contractorNumber) : '';
         var startDate = r.startDate || '';
-        csvRows.push('"' + name + '","' + title + '","' + r.type + '","' + manager + '","' + r.org + '","' + teams + '","' + rating + '","' + stackRank + '","' + supplier + '","' + num + '","' + startDate + '"');
+        var email = (r.email || '').replace(/"/g, '""');
+        csvRows.push('"' + name + '","' + title + '","' + r.type + '","' + manager + '","' + r.org + '","' + teams + '","' + rating + '","' + stackRank + '","' + supplier + '","' + num + '","' + startDate + '","' + email + '"');
     });
     var csv = csvRows.join('\n');
     var blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
@@ -1621,6 +1663,7 @@ function collectListRows() {
                 supplier: node.supplier || '',
                 contractorNumber: node.contractorNumber || '',
                 startDate: node.startDate || '',
+                email: node.email || '',
             });
         }
     });
@@ -1653,6 +1696,7 @@ function renderListTable(rows) {
         {key: 'supplier', label: 'Supplier'},
         {key: 'contractorNumber', label: '#'},
         {key: 'startDate', label: 'Start Date'},
+        {key: 'email', label: 'Email'},
     ];
     var html = '<div class="list-view"><table><thead><tr>';
     cols.forEach(function(c) {
@@ -1693,6 +1737,7 @@ function renderListTable(rows) {
         html += '<td>' + escHtml(r.supplier) + '</td>';
         html += '<td>' + (r.contractorNumber ? escHtml(String(r.contractorNumber)) : '') + '</td>';
         html += '<td>' + escHtml(r.startDate) + '</td>';
+        html += '<td>' + (r.email ? '<a href="mailto:' + escHtml(r.email) + '">' + escHtml(r.email) + '</a>' : '') + '</td>';
         html += '</tr>';
     });
     html += '</tbody></table></div>';

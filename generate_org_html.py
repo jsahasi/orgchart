@@ -29,6 +29,7 @@ from org_html_shared import (
     slugify,
     title_seniority_score,
     redact_data,
+    strip_ratings,
     verify_redaction,
     generate_html,
 )
@@ -38,6 +39,7 @@ from org_html_shared import (
 MASTER_FILE = Path(__file__).parent / "data" / "orgchart_master_data.xlsx"
 OUTPUT_FILE = Path(__file__).parent / "org_drilldown.html"
 REDACTED_FILE = Path(__file__).parent / "org_drilldown_redacted.html"
+NO_RATINGS_FILE = Path(__file__).parent / "org_drilldown_no_ratings.html"
 
 JAYESH_NAME = "Jayesh Sahasi"
 JAYESH_TITLE = "Executive VP, Products and CTO"
@@ -101,6 +103,7 @@ def parse_people(filepath):
             "contractorNumber": contractor_number,
             "supplier": (row[col.get("Supplier", -1)] or "").strip() if col.get("Supplier") is not None and row[col["Supplier"]] else "",
             "startDate": start_date,
+            "email": (row[col.get("Email", -1)] or "").strip() if col.get("Email") is not None and row[col["Email"]] else "",
         }
 
     wb.close()
@@ -224,6 +227,7 @@ def build_org_datasets(people):
                 "contractorNumber": person["contractorNumber"],
                 "supplier": person["supplier"],
                 "startDate": person["startDate"],
+                "email": person.get("email", ""),
             }
 
         # Build children map for this org (only nodes within this org)
@@ -293,6 +297,7 @@ def build_scrum_data(people, scrum_sheet, org_datasets):
                     "contractorNumber": person.get("contractorNumber", ""),
                     "supplier": person.get("supplier", ""),
                     "startDate": person.get("startDate", ""),
+                    "email": person.get("email", ""),
                 })
             # Sort: leads first, then by seniority, then alphabetically
             member_objs.sort(key=lambda x: (
@@ -333,6 +338,7 @@ def build_home_drs(org_datasets):
                 "talentBand": node.get("talentBand", ""),
                 "talentCategory": node.get("talentCategory", ""),
                 "rationale": node.get("rationale", ""),
+                "email": node.get("email", ""),
             })
 
     return home_drs
@@ -426,6 +432,12 @@ def main():
     REDACTED_FILE.write_text(html_redacted, encoding="utf-8")
     print(f"  Written: {REDACTED_FILE} ({len(html_redacted):,} bytes)")
 
+    # Step 9: Generate no-ratings HTML (named, but with per-person ratings stripped)
+    no_ratings_data = strip_ratings(data)
+    html_no_ratings = generate_html(no_ratings_data, redacted=False)
+    NO_RATINGS_FILE.write_text(html_no_ratings, encoding="utf-8")
+    print(f"  Written: {NO_RATINGS_FILE} ({len(html_no_ratings):,} bytes)")
+
     # Summary
     print("\n" + "=" * 60)
     print("Summary")
@@ -438,6 +450,7 @@ def main():
     print(f"\n  Output files:")
     print(f"    {OUTPUT_FILE}")
     print(f"    {REDACTED_FILE}")
+    print(f"    {NO_RATINGS_FILE}")
     print("\nDone!")
 
 

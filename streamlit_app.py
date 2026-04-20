@@ -30,7 +30,7 @@ from generate_org_html import (
     build_scrum_data,
     build_home_drs,
 )
-from org_html_shared import generate_html, redact_data, verify_redaction, normalize_name
+from org_html_shared import generate_html, redact_data, strip_ratings, verify_redaction, normalize_name
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -267,7 +267,7 @@ def view_org_chart(remote_path: str, filename: str, label: str):
 def regenerate_from_excel(excel_path: Path):
     """Run the generation pipeline on the given Excel file.
 
-    Returns (named_html: str, redacted_html: str, error: str|None).
+    Returns (named_html: str, redacted_html: str, no_ratings_html: str, error: str|None).
     """
     try:
         people = parse_people(excel_path)
@@ -302,14 +302,16 @@ def regenerate_from_excel(excel_path: Path):
         redacted_data = redact_data(data, all_names)
         redacted_html = generate_html(redacted_data, redacted=True)
 
+        no_ratings_html = generate_html(strip_ratings(data), redacted=False)
+
         leaked = verify_redaction(redacted_html, all_names)
         if leaked:
-            return named_html, redacted_html, f"Redaction warning: {len(leaked)} names may have leaked"
+            return named_html, redacted_html, no_ratings_html, f"Redaction warning: {len(leaked)} names may have leaked"
 
-        return named_html, redacted_html, None
+        return named_html, redacted_html, no_ratings_html, None
 
     except Exception as e:
-        return None, None, str(e)
+        return None, None, None, str(e)
 
 
 def admin_panel():
@@ -358,7 +360,7 @@ def admin_panel():
                 tmp.write(uploaded.getvalue())
                 tmp_path = Path(tmp.name)
 
-            named_html, redacted_html, error = regenerate_from_excel(tmp_path)
+            named_html, redacted_html, no_ratings_html, error = regenerate_from_excel(tmp_path)
             tmp_path.unlink(missing_ok=True)
 
             if error and named_html is None:
@@ -391,9 +393,15 @@ def admin_panel():
                     redacted_html.encode("utf-8"),
                     "Regenerate redacted org chart via Streamlit admin",
                 )
+                _commit_file(
+                    data_repo,
+                    "org_drilldown_no_ratings.html",
+                    no_ratings_html.encode("utf-8"),
+                    "Regenerate no-ratings org chart via Streamlit admin",
+                )
                 # Clear the cached data so next view loads fresh files
                 _fetch_file.clear()
-                st.success("All 3 files committed to data repo.")
+                st.success("All 4 files committed to data repo.")
             except requests.HTTPError as e:
                 st.error(f"GitHub commit failed: {e}")
                 st.code(e.response.text if e.response else "No response body")
@@ -409,12 +417,15 @@ def main():
     inject_custom_css()
 
     # Top-level tab navigation
-    tab_named, tab_redacted, tab_admin = st.tabs(
-        ["Org Chart (Named)", "Org Chart (Redacted)", "Admin"]
+    tab_named, tab_no_ratings, tab_redacted, tab_admin = st.tabs(
+        ["Org Chart (Named)", "Org Chart (No Ratings)", "Org Chart (Redacted)", "Admin"]
     )
 
     with tab_named:
         view_org_chart("org_drilldown.html", "org_drilldown.html", "Org Chart")
+
+    with tab_no_ratings:
+        view_org_chart("org_drilldown_no_ratings.html", "org_drilldown_no_ratings.html", "Org Chart (No Ratings)")
 
     with tab_redacted:
         view_org_chart("org_drilldown_redacted.html", "org_drilldown_redacted.html", "Org Chart (Redacted)")
